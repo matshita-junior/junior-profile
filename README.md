@@ -11,9 +11,19 @@ python3 -m http.server 4173 --bind 0.0.0.0
 
 ブラウザでポート4173に接続します。`index.html` が文章・プロフィール、`styles.css` がデザイン、`script.js` がフッターの年表示です。経歴やSNSリンクは確認できる情報を追加してください。
 
+## HamCup MV
+
+`hamcup/` はカップから飛び出すハムスター「HamCup」のミュージックビデオ（約1分）です。曲はWeb Audio APIでその場で合成し、映像はSVGとCSSアニメーションで描いているため、音源・動画ファイルは不要です。ローカルでは `http://localhost:4173/hamcup/` で確認できます。
+
+- `hamcup/index.html`：MVの舞台（SVG）、歌詞、プレイヤー
+- `hamcup/mv.css`：シーンごとの見た目とアニメーション
+- `hamcup/mv.js`：曲データ（コード進行・メロディ・リズム）、シンセ、映像との同期
+
+曲の構成やメロディは `mv.js` の `PROG`・`M`・`MELODY`、歌詞の表示タイミングは `LYRICS`（小節番号）で変更できます。
+
 ## 公開
 
-静的サイトとして、リポジトリ直下を公開ディレクトリに指定します。ビルドコマンドは不要です。`index.html`、`styles.css`、`script.js`、`favicon.svg` を一緒に配信してください。サブパスでの配信にも対応しています。
+静的サイトとして、リポジトリ直下を公開ディレクトリに指定します。ビルドコマンドは不要です。`index.html`、`styles.css`、`script.js`、`favicon.svg`、`hamcup/` フォルダーを一緒に配信してください。サブパスでの配信にも対応しています。
 
 GitHub Pagesを利用する場合は、サイトのファイルを対象ブランチへ反映後、リポジトリの Settings → Pages でそのブランチのルートを選択します。公開設定の変更にはGitHub側の権限が必要です。
 
