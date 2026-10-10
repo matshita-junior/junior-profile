@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="カップから飛び出すハムスター「HamCup」のミュージックビデオ。音楽も映像もブラウザの中で生まれる、約1分のオリジナルMVです。">
+  <meta name="description" content="HamCupのじゃが・さくら・まんじゅうが、疲れた夜にそっと寄り添う30秒の縦型ミュージックビデオ。">
   <meta name="theme-color" content="#f5f4ee">
-  <title>HamCup | Music Video</title>
+  <title>今日も、よく帰ってきたね | HamCup MV</title>
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../styles.css">
   <link rel="stylesheet" href="mv.css">
@@ -14,125 +14,227 @@
   <a class="skip" href="#main">本文へスキップ</a>
   <header class="header"><a class="brand" href="../" aria-label="松下哲也ジュニア ホーム">junior<span>·</span></a><nav aria-label="メインナビゲーション"><a href="../#about">私について <span>↗</span></a><a href="../#profile">プロフィール <span>↗</span></a></nav><span class="header-note">MUSIC VIDEO / HAMCUP</span></header>
   <main id="main" class="mv-page">
-    <section class="mv-intro" aria-labelledby="mv-title">
-      <p class="eyebrow"><span class="dot"></span> MUSIC VIDEO</p>
-      <h1 id="mv-title">HamCup<span class="name-dot">.</span></h1>
-      <p class="mv-lead">ちいさなカップから、ひろい世界へ。<br>音楽も映像も、このページの中で生まれる約1分のMVです。</p>
-    </section>
+    <div class="mv-layout">
+      <section class="mv-intro" aria-labelledby="mv-title">
+        <p class="eyebrow"><span class="dot"></span> HAMCUP MUSIC VIDEO</p>
+        <h1 id="mv-title">今日も、<br>よく帰ってきたね</h1>
+        <p class="mv-sub">― おやすみのお茶 ―</p>
+        <p class="mv-lead">疲れて話す元気もない夜に、じゃが・さくら・まんじゅうが静かに寄り添う30秒。</p>
+        <ul class="cast" aria-label="登場キャラクター">
+          <li><img src="assets/jaga-smile.png" alt="" width="64" height="82"><span><strong>じゃが</strong>仲間思い</span></li>
+          <li><img src="assets/sakura-smile.png" alt="" width="64" height="82"><span><strong>さくら</strong>自然と絵が好き</span></li>
+          <li><img src="assets/manju-smile.png" alt="" width="64" height="82"><span><strong>まんじゅう</strong>穏やかで気配り上手</span></li>
+        </ul>
+      </section>
 
-    <section class="player" aria-label="HamCup ミュージックビデオ プレイヤー">
-      <div class="stage" id="stage" data-scene="intro" data-state="idle">
-        <svg class="scene" viewBox="0 0 1600 900" role="img" aria-label="緑のカップから顔を出したハムスターが、お城の見える町を転がり、星空の下で踊るアニメーション">
-          <defs>
-            <clipPath id="cup-clip"><rect x="-320" y="-520" width="640" height="500"/></clipPath>
-            <radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff6d8" stop-opacity=".9"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></radialGradient>
-          </defs>
-
-          <rect class="sky" width="1600" height="900"/>
-          <g class="night-stars" fill="#f5f4ee">
-            <circle cx="180" cy="140" r="4"/><circle cx="420" cy="80" r="3"/><circle cx="640" cy="190" r="2.5"/><circle cx="1010" cy="110" r="3.5"/><circle cx="1240" cy="70" r="2.5"/><circle cx="1420" cy="200" r="4"/><circle cx="300" cy="300" r="2.5"/><circle cx="1330" cy="330" r="3"/><circle cx="90" cy="420" r="2"/><circle cx="1520" cy="430" r="2.5"/>
-          </g>
-          <g class="sun"><circle cx="1290" cy="210" r="150" fill="url(#glow)"/><circle cx="1290" cy="210" r="78" fill="#f3d27a"/></g>
-
-          <g class="town" id="town">
-            <path d="M-400 720 Q0 590 400 690 T1200 670 T2000 660 V900 H-400 Z" fill="#b9c7a6"/>
-            <g class="castle">
-              <polygon points="880,705 1160,705 1125,620 915,620" fill="#c9cdbd"/>
-              <path d="M915 645 H1125 M903 670 H1137 M892 690 H1148" stroke="#b2b7a5" stroke-width="3"/>
-              <rect x="945" y="555" width="150" height="66" fill="#f5f4ee"/>
-              <polygon points="920,562 1120,562 1078,526 962,526" fill="#244c3a"/>
-              <rect x="978" y="472" width="84" height="56" fill="#f5f4ee"/>
-              <polygon points="958,478 1082,478 1050,444 990,444" fill="#244c3a"/>
-              <rect x="996" y="410" width="48" height="36" fill="#f5f4ee"/>
-              <polygon points="980,415 1060,415 1036,384 1004,384" fill="#244c3a"/>
-              <path d="M1006 384 l-10 -14 M1034 384 l10 -14" stroke="#c8a24a" stroke-width="6" stroke-linecap="round"/>
-              <g fill="#243b31"><rect x="968" y="578" width="14" height="20"/><rect x="1013" y="578" width="14" height="20"/><rect x="1058" y="578" width="14" height="20"/><rect x="1000" y="490" width="12" height="18"/><rect x="1028" y="490" width="12" height="18"/><rect x="1014" y="420" width="12" height="14"/></g>
-            </g>
-            <path d="M-400 780 Q100 690 600 760 T1500 740 T2000 750 V900 H-400 Z" fill="#9fb48b"/>
-          </g>
-
-          <rect class="ground" y="770" width="1600" height="130"/>
-          <path class="table-edge" d="M0 770 H1600" stroke-width="10"/>
-
-          <g class="notes" fill="#243b31">
-            <text x="430" y="420" font-size="64">♪</text><text x="1130" y="360" font-size="54">♫</text><text x="520" y="250" font-size="44">♪</text><text x="1060" y="520" font-size="48">♪</text>
-          </g>
-
-          <g class="big-star"><polygon transform="translate(420 20)" points="800,90 828,166 908,168 845,216 868,294 800,248 732,294 755,216 692,168 772,166" fill="#f3d27a"/></g>
-
-          <g class="hero" transform="translate(800 540)">
-            <g id="bob">
-              <ellipse class="shadow" cx="0" cy="222" rx="150" ry="16" fill="#243b31" opacity=".18"/>
-              <g class="steam" fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round">
-                <path d="M-60 -80 c-30 -40 30 -70 0 -120 c-30 -45 25 -70 0 -110"/>
-                <path d="M10 -90 c-30 -40 30 -70 0 -120 c-30 -45 25 -70 0 -110"/>
-                <path d="M80 -80 c-30 -40 30 -70 0 -120 c-30 -45 25 -70 0 -110"/>
+      <section class="player" aria-label="ミュージックビデオ プレイヤー">
+        <div class="stage" id="stage" data-state="idle">
+          <svg id="mv" viewBox="0 0 900 1600" role="img" aria-label="夜の居間で、まんじゅうがお茶を注ぎ、じゃががクッションを運び、さくらが花と絵を飾り、3匹があなたの席を整えるアニメーション">
+            <defs>
+              <linearGradient id="g-wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#232338"/><stop offset="1" stop-color="#3a3049"/></linearGradient>
+              <linearGradient id="g-floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a3327"/><stop offset="1" stop-color="#2e2019"/></linearGradient>
+              <linearGradient id="g-glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#18213d"/><stop offset="1" stop-color="#34406a"/></linearGradient>
+              <radialGradient id="g-lamp"><stop offset="0" stop-color="#ffd79c" stop-opacity=".6"/><stop offset=".45" stop-color="#ffbf73" stop-opacity=".2"/><stop offset="1" stop-color="#ffbf73" stop-opacity="0"/></radialGradient>
+              <radialGradient id="g-moon"><stop offset="0" stop-color="#fff4cf" stop-opacity=".55"/><stop offset="1" stop-color="#fff4cf" stop-opacity="0"/></radialGradient>
+              <radialGradient id="g-table" cx=".45" cy=".35"><stop offset="0" stop-color="#b17d50"/><stop offset="1" stop-color="#875632"/></radialGradient>
+              <radialGradient id="g-vignette" r=".75"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></radialGradient>
+              <linearGradient id="g-beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d6e4ff" stop-opacity=".16"/><stop offset="1" stop-color="#d6e4ff" stop-opacity="0"/></linearGradient>
+              <filter id="f-steam" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter>
+              <filter id="f-soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2"/></filter>
+              <g id="steam-wisp"><path d="M0 0 c-14 -22 14 -42 0 -64 c-14 -22 14 -42 0 -64" fill="none" stroke="#fffaf0" stroke-width="9" stroke-linecap="round"/></g>
+              <g id="yunomi">
+                <path d="M-36 -72 L36 -72 L29 -7 Q27 0 18 0 L-18 0 Q-27 0 -29 -7 Z" fill="#f2ecdd"/>
+                <path d="M-33 -44 L33 -44 L32 -35 L-32 -35 Z" fill="#7fa39a"/>
+                <ellipse cx="0" cy="-72" rx="36" ry="9" fill="#e4d9c2"/>
+                <ellipse cx="0" cy="-72" rx="31" ry="7" fill="#5c4a3a"/>
               </g>
-              <path d="M138 10 C235 10 235 150 120 150" fill="none" stroke="#244c3a" stroke-width="28" stroke-linecap="round"/>
-              <ellipse cx="0" cy="-40" rx="150" ry="24" fill="#2f5d47"/>
-              <ellipse cx="0" cy="-38" rx="132" ry="16" fill="#163428"/>
-              <g clip-path="url(#cup-clip)">
-                <g class="ham" id="ham">
-                  <circle cx="-82" cy="-206" r="32" fill="#e9a85e"/><circle cx="-82" cy="-206" r="17" fill="#f2b8b0"/>
-                  <circle cx="82" cy="-206" r="32" fill="#e9a85e"/><circle cx="82" cy="-206" r="17" fill="#f2b8b0"/>
-                  <ellipse cx="0" cy="-112" rx="122" ry="116" fill="#e9a85e"/>
-                  <ellipse cx="0" cy="-72" rx="84" ry="72" fill="#fbe9cf"/>
-                  <g class="eyes" fill="#243b31"><circle class="eye" cx="-46" cy="-142" r="13"/><circle class="eye" cx="46" cy="-142" r="13"/></g>
-                  <g fill="#ffffff"><circle cx="-41" cy="-147" r="4.5"/><circle cx="51" cy="-147" r="4.5"/></g>
-                  <ellipse cx="-80" cy="-104" rx="22" ry="14" fill="#f2a7a0" opacity=".85"/><ellipse cx="80" cy="-104" rx="22" ry="14" fill="#f2a7a0" opacity=".85"/>
-                  <ellipse cx="0" cy="-119" rx="10" ry="7" fill="#c86f6f"/>
-                  <path d="M-13 -103 Q-6 -94 0 -103 Q6 -94 13 -103" fill="none" stroke="#243b31" stroke-width="3.5" stroke-linecap="round"/>
-                  <g stroke="#9a7046" stroke-width="2.5" stroke-linecap="round"><path d="M-30 -116 L-92 -126 M-30 -110 L-94 -108"/><path d="M30 -116 L92 -126 M30 -110 L94 -108"/></g>
-                  <ellipse cx="-62" cy="-44" rx="27" ry="17" fill="#fbe9cf"/><ellipse cx="62" cy="-44" rx="27" ry="17" fill="#fbe9cf"/>
+              <g id="flower-shape">
+                <path d="M0 0 C2 -20 -2 -40 0 -62" stroke="#5f7d4a" stroke-width="3" fill="none"/>
+                <path d="M0 -30 q12 -10 20 -4 q-10 10 -20 4" fill="#6f8f55"/>
+                <g transform="translate(0 -66)"><circle r="7" cx="0" cy="-8" fill="#f4b3c2"/><circle r="7" cx="7.6" cy="-2.5" fill="#f4b3c2"/><circle r="7" cx="4.7" cy="6.5" fill="#f4b3c2"/><circle r="7" cx="-4.7" cy="6.5" fill="#f4b3c2"/><circle r="7" cx="-7.6" cy="-2.5" fill="#f4b3c2"/><circle r="4" fill="#f7d77a"/></g>
+              </g>
+            </defs>
+
+            <!-- Scene B: the living room (7s–30s) -->
+            <g id="scene-b">
+              <g id="cam-b">
+                <rect x="-400" y="-400" width="1700" height="1400" fill="url(#g-wall)"/>
+                <rect x="-400" y="860" width="1700" height="140" fill="#2c2536"/>
+                <path d="M-400 860 H1300" stroke="#4a3d52" stroke-width="4"/>
+
+                <g id="window">
+                  <path d="M600 420 C590 520 600 700 585 958 L570 958 C585 700 575 520 586 420 Z" fill="#b98c8f"/>
+                  <rect x="600" y="420" width="260" height="540" rx="6" fill="#6b4a34"/>
+                  <rect x="614" y="434" width="232" height="512" fill="url(#g-glass)"/>
+                  <g id="stars" fill="#f5f0dc"><circle cx="650" cy="480" r="2.5"/><circle cx="805" cy="470" r="2"/><circle cx="660" cy="640" r="2"/><circle cx="820" cy="760" r="2.5"/><circle cx="690" cy="860" r="1.8"/><circle cx="780" cy="900" r="2"/></g>
+                  <circle cx="752" cy="560" r="130" fill="url(#g-moon)"/>
+                  <circle cx="752" cy="560" r="42" fill="#fff1c4"/>
+                  <circle cx="738" cy="548" r="9" fill="#efe0ad"/><circle cx="764" cy="574" r="6" fill="#efe0ad"/>
+                  <path d="M730 434 V946 M614 690 H846" stroke="#6b4a34" stroke-width="9"/>
+                  <path d="M846 420 C858 520 850 700 866 958 L880 958 C866 700 874 520 862 420 Z" fill="#b98c8f"/>
+                  <rect x="585" y="956" width="290" height="22" rx="3" fill="#7a5640"/>
+                  <g id="sill-vase">
+                    <use href="#flower-shape" transform="translate(812 952) rotate(9)"/>
+                    <use href="#flower-shape" transform="translate(826 952) rotate(20) scale(.9)"/>
+                    <path d="M800 958 Q794 940 802 918 L834 918 Q842 940 836 958 Z" fill="#cfe3e6" opacity=".55"/>
+                    <path d="M806 918 h24" stroke="#e9f4f5" stroke-width="3" opacity=".7"/>
+                  </g>
                 </g>
+
+                <g id="lamp">
+                  <ellipse cx="108" cy="1002" rx="52" ry="12" fill="#1e1814"/>
+                  <rect x="104" y="520" width="8" height="482" fill="#8a6a48"/>
+                  <circle id="lamp-glow" cx="108" cy="520" r="560" fill="url(#g-lamp)"/>
+                  <polygon id="lamp-shade" points="40,528 176,528 150,430 66,430" fill="#f5d8a4"/>
+                  <path d="M120 528 V600" stroke="#c9a46a" stroke-width="2"/><circle cx="120" cy="604" r="5" fill="#c9a46a"/>
+                </g>
+
+                <rect x="-400" y="1000" width="1700" height="900" fill="url(#g-floor)"/>
+                <path d="M-400 1060 H1300 M-400 1140 H1300 M-400 1240 H1300 M-400 1370 H1300 M-400 1530 H1300" stroke="#000" stroke-opacity=".14" stroke-width="3"/>
+                <polygon points="614,1000 846,1000 820,1700 380,1700" fill="url(#g-beam)"/>
+                <ellipse cx="450" cy="1300" rx="430" ry="150" fill="#5b4152" opacity=".7"/>
+                <ellipse cx="450" cy="1300" rx="380" ry="125" fill="none" stroke="#7a5a6a" stroke-width="4" opacity=".7"/>
+
+                <g id="manju" class="char"><image/></g>
+                <g id="sakura" class="char"><image/></g>
+                <use id="flower-carried" href="#flower-shape"/>
+
+                <ellipse cx="450" cy="1292" rx="330" ry="42" fill="#000" opacity=".28"/>
+                <rect x="252" y="1170" width="26" height="112" rx="5" fill="#6e4429"/>
+                <rect x="622" y="1170" width="26" height="112" rx="5" fill="#6e4429"/>
+                <ellipse cx="450" cy="1174" rx="300" ry="72" fill="#77492b"/>
+                <ellipse cx="450" cy="1150" rx="300" ry="70" fill="url(#g-table)"/>
+                <ellipse cx="450" cy="1150" rx="284" ry="62" fill="none" stroke="#c99a6c" stroke-opacity=".35" stroke-width="3"/>
+
+                <g id="teapot-b" transform="translate(232 1136) scale(.62)">
+                  <path d="M-55 -78 C-110 -70 -110 -20 -56 -28" fill="none" stroke="#4d7a72" stroke-width="12" stroke-linecap="round"/>
+                  <path d="M50 -50 C80 -60 88 -80 104 -98" fill="none" stroke="#5f8f86" stroke-width="16" stroke-linecap="round"/>
+                  <ellipse cx="0" cy="-52" rx="64" ry="52" fill="#5f8f86"/>
+                  <ellipse cx="-18" cy="-66" rx="20" ry="12" fill="#86b3a9" opacity=".6"/>
+                  <ellipse cx="0" cy="-102" rx="32" ry="9" fill="#4d7a72"/><circle cx="0" cy="-114" r="8" fill="#4d7a72"/>
+                </g>
+                <image href="assets/manju-cup.png" x="300" y="1068" width="60" height="55"/>
+                <image href="assets/sakura-cup.png" x="604" y="1088" width="72" height="41"/>
+                <image href="assets/jaga-cup.png" x="664" y="1098" width="62" height="36"/>
+
+                <g id="bud-vase">
+                  <use href="#flower-shape" transform="translate(0 -26) scale(.85)"/>
+                  <path d="M-9 0 Q-15 -14 -6 -26 L6 -26 Q15 -14 9 0 Z" fill="#d6ecee" opacity=".7"/>
+                </g>
+                <g id="card">
+                  <rect x="-50" y="-36" width="100" height="72" rx="3" fill="#fbf6ea" stroke="#d8cdb5" stroke-width="2"/>
+                  <path d="M-34 -22 a8 8 0 1 0 8 -8 a6 6 0 1 1 -8 8" fill="#f3d27a"/>
+                  <text x="22" y="-14" font-size="14" fill="#8aa0c8" font-family="sans-serif">z z</text>
+                  <path d="M-46 22 H46" stroke="#b9c7e0" stroke-width="10" stroke-linecap="round"/>
+                  <ellipse cx="-26" cy="12" rx="15" ry="13" fill="#f3c46b" stroke="#9a6a22" stroke-width="2"/>
+                  <ellipse cx="0" cy="13" rx="15" ry="13" fill="#fbf3f3" stroke="#c46880" stroke-width="2"/>
+                  <ellipse cx="26" cy="12" rx="15" ry="13" fill="#97591f" stroke="#54401f" stroke-width="2"/>
+                  <path d="M-31 10 q2 2 4 0 M-23 10 q2 2 4 0 M-5 11 q2 2 4 0 M3 11 q2 2 4 0 M21 10 q2 2 4 0 M29 10 q2 2 4 0" stroke="#3a2a20" stroke-width="1.5" fill="none"/>
+                  <path d="M-28 26 H48" stroke="#b9c7e0" stroke-width="12" stroke-linecap="round"/>
+                </g>
+                <g id="vcup-b">
+                  <g id="steam-b" filter="url(#f-steam)"><use href="#steam-wisp"/><use href="#steam-wisp"/><use href="#steam-wisp"/></g>
+                  <use href="#yunomi"/>
+                  <ellipse cx="0" cy="-72" rx="30" ry="6.5" fill="#c9a253"/>
+                </g>
+
+                <g id="cushion">
+                  <ellipse cx="0" cy="4" rx="150" ry="20" fill="#000" opacity=".3"/>
+                  <path d="M-140 -10 Q-152 -60 -128 -104 Q-60 -126 0 -122 Q60 -126 128 -104 Q152 -60 140 -10 Q70 6 0 4 Q-70 6 -140 -10 Z" fill="#7d8cb6"/>
+                  <path d="M-126 -98 Q-60 -122 0 -118 Q60 -122 126 -98 Q100 -64 0 -60 Q-100 -64 -126 -98 Z" fill="#9aaad2"/>
+                  <circle cx="0" cy="-88" r="7" fill="#5d6a93"/>
+                  <path d="M-140 -10 l-12 10 M140 -10 l12 10 M-128 -104 l-14 -6 M128 -104 l14 -6" stroke="#d9b56a" stroke-width="5" stroke-linecap="round"/>
+                </g>
+                <g id="jaga" class="char"><image/></g>
               </g>
-              <path d="M-150 -40 H150 L126 182 Q121 212 90 212 H-90 Q-121 212 -126 182 Z" fill="#244c3a"/>
-              <path d="M-150 -40 A150 24 0 0 0 150 -40" fill="none" stroke="#2f5d47" stroke-width="8"/>
-              <text x="0" y="96" text-anchor="middle" fill="#f5f4ee" font-size="46" font-weight="700" font-family="Arial, sans-serif" letter-spacing="1">HamCup</text>
-              <text x="0" y="150" text-anchor="middle" fill="#a8b98f" font-size="34">✳</text>
             </g>
-          </g>
 
-          <g class="sparks" fill="#f5f4ee">
-            <text x="420" y="330" font-size="90">✳</text><text x="1120" y="280" font-size="70">✳</text><text x="300" y="620" font-size="56">✳</text><text x="1250" y="620" font-size="80">✳</text><text x="620" y="170" font-size="50">✳</text><text x="980" y="150" font-size="60">✳</text>
-          </g>
-        </svg>
-        <div class="flash" aria-hidden="true"></div>
+            <!-- Scene A: reverse angle from behind Manju (0s–7s) -->
+            <g id="scene-a">
+              <g id="cam-a">
+                <rect x="-400" y="-400" width="1700" height="1400" fill="url(#g-wall)"/>
+                <rect x="-400" y="860" width="1700" height="140" fill="#2c2536"/>
+                <circle cx="450" cy="330" r="300" fill="url(#g-lamp)"/>
+                <path d="M430 300 h40 l-8 36 h-24 Z" fill="#f5d8a4"/>
+                <rect x="296" y="400" width="308" height="604" rx="4" fill="#4f3424"/>
+                <rect x="314" y="418" width="272" height="586" fill="#7b5338"/>
+                <rect x="340" y="450" width="220" height="250" rx="4" fill="#6c4830"/>
+                <rect x="340" y="730" width="220" height="250" rx="4" fill="#6c4830"/>
+                <rect x="400" y="470" width="100" height="120" rx="50" fill="#f6d9a0" opacity=".55"/>
+                <circle cx="556" cy="740" r="10" fill="#d9b56a"/>
+                <path d="M690 560 v24" stroke="#8a6a48" stroke-width="5"/>
+                <path d="M676 586 q14 -10 28 0 v120 q-6 12 -14 0 q-8 12 -14 0 Z" fill="#c98a96"/>
+                <path d="M760 1000 l-20 -90 h70 l-20 90 Z" fill="#9b6b4b"/>
+                <path d="M775 912 c-40 -60 -10 -120 0 -150 c10 30 40 90 0 150 M775 912 c-60 -30 -70 -80 -80 -100 c40 10 70 40 80 100 M775 912 c50 -30 70 -70 84 -96 c-40 6 -74 40 -84 96" fill="#5f7d4a"/>
+                <rect x="-400" y="1000" width="1700" height="900" fill="url(#g-floor)"/>
+                <path d="M-400 1060 H1300 M-400 1140 H1300" stroke="#000" stroke-opacity=".14" stroke-width="3"/>
+                <rect x="360" y="1004" width="180" height="26" rx="6" fill="#6b5a4f"/>
+                <ellipse id="empty-seat" cx="460" cy="1112" rx="150" ry="34" fill="#ffe1ad" opacity=".12"/>
 
-        <div class="title-card" aria-hidden="true"><span>A MUSIC VIDEO</span><strong>HamCup</strong><em>ハムカップ</em></div>
-        <div class="end-card" aria-hidden="true"><span>STAY CURIOUS. KEEP CREATING.</span><strong>HamCup</strong><em>fin.</em></div>
-        <p class="lyric" id="lyric" aria-hidden="true"></p>
+                <ellipse cx="450" cy="1390" rx="520" ry="80" fill="#000" opacity=".3"/>
+                <ellipse cx="450" cy="1336" rx="480" ry="112" fill="#77492b"/>
+                <ellipse cx="450" cy="1300" rx="480" ry="110" fill="url(#g-table)"/>
 
-        <button class="big-play" id="big-play" type="button" aria-label="MVを再生"><span aria-hidden="true">▶</span> PLAY</button>
-      </div>
+                <path id="stream-a" fill="none" stroke="#d9b066" stroke-width="7" stroke-linecap="round" stroke-dasharray="16 10"/>
+                <g id="vcup-a" transform="translate(570 1292) scale(1.7)">
+                  <g id="steam-a" filter="url(#f-steam)"><use href="#steam-wisp"/><use href="#steam-wisp"/><use href="#steam-wisp"/></g>
+                  <use href="#yunomi"/>
+                  <ellipse id="tea-a" cx="0" cy="-72" rx="30" ry="6.5" fill="#c9a253"/>
+                </g>
+                <g id="teapot-a">
+                  <path d="M-55 -78 C-110 -70 -110 -20 -56 -28" fill="none" stroke="#4d7a72" stroke-width="12" stroke-linecap="round"/>
+                  <path d="M50 -50 C80 -60 88 -80 104 -98" fill="none" stroke="#5f8f86" stroke-width="16" stroke-linecap="round"/>
+                  <ellipse cx="0" cy="-52" rx="64" ry="52" fill="#5f8f86"/>
+                  <ellipse cx="-18" cy="-66" rx="20" ry="12" fill="#86b3a9" opacity=".6"/>
+                  <ellipse cx="0" cy="-102" rx="32" ry="9" fill="#4d7a72"/><circle cx="0" cy="-114" r="8" fill="#4d7a72"/>
+                </g>
+                <g id="manju-back" class="char"><image href="assets/manju-back.png"/></g>
+              </g>
+            </g>
 
-      <div class="controls">
-        <button class="ctrl" id="toggle" type="button" aria-label="再生">▶</button>
-        <input class="seek" id="seek" type="range" min="0" max="64" step="0.1" value="0" aria-label="再生位置">
-        <span class="time" id="time">0:00 / 1:04</span>
-        <button class="ctrl" id="fullscreen" type="button" aria-label="全画面表示">⤢</button>
-      </div>
-      <p class="player-note" id="player-note">音が出ます。スペースキーで再生・一時停止できます。</p>
-    </section>
+            <!-- Screen-space overlays -->
+            <rect width="900" height="1600" fill="url(#g-vignette)" pointer-events="none"/>
+            <rect id="dim" width="900" height="1600" fill="#0a0918" opacity="0"/>
+            <g id="title" text-anchor="middle" class="mv-text">
+              <text x="450" y="210" font-size="50" fill="#fff6e6">今日も、よく帰ってきたね</text>
+              <text x="450" y="268" font-size="28" fill="#e9d9bd" letter-spacing="4">― おやすみのお茶 ―</text>
+            </g>
+            <text id="lyric" x="450" y="1468" text-anchor="middle" font-size="50" fill="#fff6e6" class="mv-text lyric-text"></text>
+            <text id="end-text" x="450" y="1250" text-anchor="middle" font-size="40" fill="#fff6e6" letter-spacing="3" class="mv-text">今日も、よく帰ってきたね</text>
+            <rect id="fade" width="900" height="1600" fill="#000" opacity="0"/>
+          </svg>
+          <button class="big-play" id="big-play" type="button" aria-label="MVを再生"><span aria-hidden="true">▶</span> PLAY</button>
+        </div>
+
+        <div class="controls">
+          <button class="ctrl" id="toggle" type="button" aria-label="再生">▶</button>
+          <input class="seek" id="seek" type="range" min="0" max="30" step="0.05" value="0" aria-label="再生位置">
+          <span class="time" id="time">0:00 / 0:30</span>
+          <button class="ctrl" id="fullscreen" type="button" aria-label="全画面表示">⤢</button>
+        </div>
+        <p class="player-note" id="player-note">音が出ます。スペースキーで再生・一時停止できます。</p>
+      </section>
+    </div>
 
     <section class="section mv-lyrics" aria-labelledby="lyrics-title">
-      <div class="section-label"><span>LYRICS</span><span>歌詞</span></div>
+      <div class="section-label"><span>LYRICS</span><span>サビの歌詞</span></div>
       <div class="about-content">
-        <h2 id="lyrics-title">ハムカップ</h2>
-        <div class="lyrics-body">
-          <p>ちいさなカップの中で<br>まるまる夢を見てた<br>ふたを開けたら 朝の光<br>ひげが ぴくっと動いた</p>
-          <p>お城の坂道 ころころと<br>知らない景色へ 転がってく<br>ほっぺにつめた 好奇心<br>今日もひとつ 挑戦だ</p>
-          <p>ハムカップ！ ぴょんと飛び出せ<br>ハムカップ！ 世界はひろい<br>ちいさくたって かまわない<br>きみも 星になれるさ</p>
-        </div>
+        <h2 id="lyrics-title">あたたかい夜を、あなたに。</h2>
+        <p class="lyrics-body">うまく話せなくても いいよ<br>ため息ひとつ 置いていこう<br>今日も よく帰ってきたね<br>あたたかい夜を あなたに</p>
       </div>
     </section>
 
     <section class="section mv-about" aria-labelledby="mv-about-title">
-      <div class="section-label"><span>ABOUT THIS MV</span><span>このMVについて</span></div>
+      <div class="section-label"><span>STORYBOARD</span><span>映像構成</span></div>
       <div class="about-content">
-        <h2 id="mv-about-title">ぜんぶ、ブラウザの中で。</h2>
-        <p>曲はWeb Audio APIでその場で演奏され、ハムスターや町並みはSVGで描かれています。音源ファイルも動画ファイルも使っていません。</p>
-        <p>構成は INTRO → VERSE A → VERSE B → CHORUS → OUTRO の5シーン。テンポ120、32小節の約1分です。</p>
+        <h2 id="mv-about-title">言葉のかわりに、小さな気づかい。</h2>
+        <ol class="storyboard">
+          <li><span>0–7s</span>まんじゅうが小さなカップにお茶を注ぐ。湯気の向こうに、空いた席がひとつ。</li>
+          <li><span>7–15s</span>じゃがが自分より大きなクッションを一生懸命押して、その席にちょこんと整える。</li>
+          <li><span>15–23s</span>さくらが窓辺の花を一輪と、眠る3匹の絵をカップのそばへ。まんじゅうがお茶をあなたの席へ近づける。</li>
+          <li><span>23–30s</span>あなたの席から3匹を眺める。じゃがのあくびが、さくらにうつる。まんじゅうが灯りを落とし、湯気と月明かりだけが残る。</li>
+        </ol>
+        <p>音楽は穏やかなローファイ・ポップ（BPM 80）。丸いピアノ、静かなギター、控えめなリズムをWeb Audio APIでその場で演奏します。サビのメロディはハミングのガイドで、歌声は収録した音声に差し替える想定です。</p>
       </div>
     </section>
   </main>

@@ -13,13 +13,24 @@ python3 -m http.server 4173 --bind 0.0.0.0
 
 ## HamCup MV
 
-`hamcup/` はカップから飛び出すハムスター「HamCup」のミュージックビデオ（約1分）です。曲はWeb Audio APIでその場で合成し、映像はSVGとCSSアニメーションで描いているため、音源・動画ファイルは不要です。ローカルでは `http://localhost:4173/hamcup/` で確認できます。
+`hamcup/` はHamCupのじゃが・さくら・まんじゅうによる縦型（9:16）30秒のミュージックビデオ「今日も、よく帰ってきたね ― おやすみのお茶 ―」です。ローカルでは `http://localhost:4173/hamcup/` で再生できます。
 
-- `hamcup/index.html`：MVの舞台（SVG）、歌詞、プレイヤー
-- `hamcup/mv.css`：シーンごとの見た目とアニメーション
-- `hamcup/mv.js`：曲データ（コード進行・メロディ・リズム）、シンセ、映像との同期
+- `hamcup/index.html`：居間の舞台（SVG）、プレイヤー、歌詞・映像構成
+- `hamcup/mv.js`：タイムライン（カメラ・キャラの動き・テロップ）と、Web Audio APIによるローファイ・ポップの演奏
+- `hamcup/mv.css`：ページと書き出しモードの見た目
+- `hamcup/assets/`：キャラクターシートから切り出したキャラ・カップの画像（笑顔・あくびは表情パーツを合成）
+- `hamcup/tools/export-mv.js`：MP4（1080×1920 / 30fps）への書き出し
 
-曲の構成やメロディは `mv.js` の `PROG`・`M`・`MELODY`、歌詞の表示タイミングは `LYRICS`（小節番号）で変更できます。
+キャラの動きやカメラは `mv.js` の `renderA`（0〜7秒）・`renderB`（7〜30秒）と `CAM_B`、歌詞の表示時間は `LYRICS`、曲は `BARS`・`PIANO_LINE`・`HUM` で変更できます。サビのメロディはハミングのガイドなので、歌声は別途収録した音声に差し替えてください。
+
+### MP4に書き出す
+
+Node.js・Playwright（Chromium）・ffmpeg が必要です。
+
+```sh
+python3 -m http.server 4173          # リポジトリ直下で起動
+node hamcup/tools/export-mv.js hamcup-mv.mp4
+```
 
 ## 公開
 
