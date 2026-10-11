@@ -23,6 +23,8 @@ python3 -m http.server 4173 --bind 0.0.0.0
 
 キャラの動きやカメラは `mv.js` の `renderA`（0〜7秒）・`renderB`（7〜30秒）と `CAM_B`、歌詞の表示時間は `LYRICS`、曲は `BARS`・`PIANO_LINE`・`HUM` で変更できます。サビのメロディはハミングのガイドなので、歌声は別途収録した音声に差し替えてください。
 
+`hamcup/ohayo/` は続編「おはようの一杯 ― 朝の支度 ―」（縦型30秒）です。キャラ画像は `hamcup/assets/`、スタイルは `hamcup/mv.css` を共用し、タイムラインと曲は `hamcup/ohayo/mv.js` にあります。
+
 ### MP4に書き出す
 
 Node.js・Playwright（Chromium）・ffmpeg が必要です。
@@ -30,6 +32,7 @@ Node.js・Playwright（Chromium）・ffmpeg が必要です。
 ```sh
 python3 -m http.server 4173          # リポジトリ直下で起動
 node hamcup/tools/export-mv.js hamcup-mv.mp4
+node hamcup/tools/export-mv.js hamcup-ohayo.mp4 http://localhost:4173/hamcup/ohayo/?export
 ```
 
 ## 公開
