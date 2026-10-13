@@ -25,6 +25,8 @@ python3 -m http.server 4173 --bind 0.0.0.0
 
 `hamcup/ohayo/` は続編「おはようの一杯 ― 朝の支度 ―」（縦型30秒）です。キャラ画像は `hamcup/assets/`、スタイルは `hamcup/mv.css` を共用し、タイムラインと曲は `hamcup/ohayo/mv.js` にあります。
 
+`hamcup/konnichiwa/` は第3作「ひなたのおすそわけ ― こんにちはの時間 ―」（縦型30秒）です。同じくキャラ画像とスタイルを共用し、タイムラインと曲は `hamcup/konnichiwa/mv.js` にあります。
+
 ### MP4に書き出す
 
 Node.js・Playwright（Chromium）・ffmpeg が必要です。
@@ -33,6 +35,7 @@ Node.js・Playwright（Chromium）・ffmpeg が必要です。
 python3 -m http.server 4173          # リポジトリ直下で起動
 node hamcup/tools/export-mv.js hamcup-mv.mp4
 node hamcup/tools/export-mv.js hamcup-ohayo.mp4 http://localhost:4173/hamcup/ohayo/?export
+node hamcup/tools/export-mv.js hamcup-konnichiwa.mp4 http://localhost:4173/hamcup/konnichiwa/?export
 ```
 
 ## 公開
