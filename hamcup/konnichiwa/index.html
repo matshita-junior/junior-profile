@@ -29,7 +29,7 @@
 
       <section class="player" aria-label="ミュージックビデオ プレイヤー">
         <div class="stage" id="stage" data-state="idle">
-          <svg id="mv" viewBox="0 0 900 1600" role="img" aria-label="ひなたの木かげで、さくらが絵を描き、じゃががバスケットを運び、まんじゅうが飲み物を並べ、3匹がこんにちはと迎えるアニメーション">
+          <svg id="mv" viewBox="0 0 900 1600" role="img" aria-label="お昼のチャイムで、昼寝していたまんじゅうが目を覚まし、さくらが絵を描き、じゃががバスケットを運び、まんじゅうが飲み物を並べ、3匹がこんにちはと迎えるアニメーション">
             <defs>
               <linearGradient id="g-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd0f2"/><stop offset="1" stop-color="#e4f6fc"/></linearGradient>
               <linearGradient id="g-grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a6d688"/><stop offset="1" stop-color="#7db55f"/></linearGradient>
@@ -67,6 +67,17 @@
               </g>
               <path d="M-400 900 Q-100 780 250 860 T900 830 T1300 850 V1100 H-400 Z" fill="#b9dc9c"/>
               <path d="M-400 950 Q100 860 520 930 T1300 910 V1100 H-400 Z" fill="#9fcd80"/>
+              <g id="clocktower">
+                <rect x="738" y="770" width="44" height="160" fill="#f3e6cf"/>
+                <polygon points="728,772 792,772 760,722" fill="#d9776a"/>
+                <circle cx="760" cy="800" r="15" fill="#ffffff" stroke="#9a6b45" stroke-width="3"/>
+                <path d="M760 800 V789 M760 800 V792" stroke="#3a2a20" stroke-width="2.5" stroke-linecap="round"/>
+                <rect x="752" y="890" width="16" height="40" rx="6" fill="#9a6b45"/>
+                <g id="chime-waves" fill="none" stroke="#fffaf0" stroke-width="4" stroke-linecap="round">
+                  <path d="M800 770 q12 14 0 28"/><path d="M814 760 q20 24 0 48"/><path d="M720 770 q-12 14 0 28"/><path d="M706 760 q-20 24 0 48"/>
+                </g>
+                <text id="noon" x="760" y="700" text-anchor="middle" font-size="40" fill="#fffaf0" class="mv-text">12:00</text>
+              </g>
               <rect x="-400" y="960" width="1700" height="1000" fill="url(#g-grass)"/>
               <path d="M520 960 v-40 M560 960 v-40 M600 960 v-40 M640 960 v-40 M680 960 v-40 M720 960 v-40 M760 960 v-40 M800 960 v-40 M840 960 v-40 M880 960 v-40 M500 930 H900 M500 948 H900" stroke="#f3e6cf" stroke-width="7" stroke-linecap="round"/>
               <g fill="#ffffff"><circle cx="90" cy="1080" r="6"/><circle cx="820" cy="1110" r="6"/><circle cx="760" cy="1460" r="7"/><circle cx="120" cy="1500" r="6"/><circle cx="860" cy="1300" r="5"/></g>
@@ -86,6 +97,7 @@
               <ellipse cx="450" cy="1250" rx="340" ry="112" fill="none" stroke="#e46f6f" stroke-width="5" opacity=".6"/>
 
               <g id="manju" class="char"><image/></g>
+              <g id="zzz" class="mv-text" fill="#8aa0c8" font-size="34" style="stroke-width:0"><text>z</text><text>z</text><text>Z</text></g>
               <g id="sakura" class="char"><image/></g>
               <g id="jaga" class="char"><image/></g>
 
@@ -165,7 +177,7 @@
       <div class="about-content">
         <h2 id="mv-about-title">木かげのピクニックへ、ようこそ。</h2>
         <ol class="storyboard">
-          <li><span>0–8s</span>青空から木かげへ。ピクニックシートの上で、さくらが花の絵を描いている。</li>
+          <li><span>0–8s</span>遠くの時計台から、お昼のチャイム。木かげで昼寝していたまんじゅうが目を覚ましてのびをし、となりで絵を描くさくらと目が合って笑う。</li>
           <li><span>8–16s</span>じゃがが大きなバスケットを運んでくる。おにぎりが飛び出し、まんじゅうが飲み物を並べる。</li>
           <li><span>16–24s</span>3匹があなたに気づいて「こんにちは！」。さくらは3匹とあなたを描いた絵を見せ、まんじゅうが冷たいお茶を差し出す。</li>
           <li><span>24–30s</span>葉っぱが舞う木かげで、3匹が手を振る。「こんにちは、いっしょにどう？」</li>

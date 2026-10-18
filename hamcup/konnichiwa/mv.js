@@ -66,7 +66,7 @@
 
   const jaga = makeChar('jaga', 'jaga'), sakura = makeChar('sakura', 'sakura'), manju = makeChar('manju', 'manju');
   const el = {
-    cam: $('cam'), clouds: $('clouds'), leaves: $('leaves'), sketch: $('sketch'), sketchBook: $('sketch-book'),
+    cam: $('cam'), clouds: $('clouds'), zzz: $('zzz'), noon: $('noon'), chimeWaves: $('chime-waves'), leaves: $('leaves'), sketch: $('sketch'), sketchBook: $('sketch-book'),
     sketchLine: $('sketch-line'), sketchFlower: $('sketch-flower'), sketchFriends: $('sketch-friends'), pencil: $('pencil'),
     basket: $('basket'), bubble: $('bubble'), glass: $('glass-you'),
     cups: [$('cup-manju'), $('cup-sakura'), $('cup-jaga')], oni: [$('oni1'), $('oni2'), $('oni3')],
@@ -80,7 +80,7 @@
 
   // ---------- The picnic under the tree ----------
   const CAM = [
-    [0, 450, 640, 1.15], [3.6, 450, 1120, 1.3], [5, 620, 1110, 1.6], [7.6, 640, 1110, 1.6], [8.4, 820, 1160, 1.4],
+    [0, 740, 800, 1.7], [1.6, 740, 800, 1.7], [2.5, 320, 1110, 1.7], [5.0, 320, 1110, 1.7], [6.0, 450, 1120, 1.35], [7.6, 560, 1120, 1.4], [8.4, 820, 1160, 1.4],
     [11.4, 470, 1170, 1.4], [12.6, 380, 1240, 1.6], [15.4, 450, 1260, 1.45], [16.6, 450, 1080, 1.3], [19.2, 450, 1080, 1.3],
     [20.0, 620, 1110, 1.5], [21.6, 620, 1110, 1.5], [22.2, 410, 1260, 1.6], [23.4, 410, 1260, 1.6], [24.6, 450, 1060, 1.2], [30, 450, 990, 1.1]
   ];
@@ -99,12 +99,17 @@
       place(lf, x, y, 1.4, t * 70 + i * 40);
     });
 
+    // The noon chime rings from the clock tower on the hill.
+    const chime = seg(t, .2, .5) * (1 - seg(t, 2.0, 2.6));
+    el.noon.setAttribute('opacity', chime.toFixed(3));
+    el.chimeWaves.setAttribute('opacity', (chime * (.4 + .6 * Math.abs(Math.sin(t * Math.PI * 1.8)))).toFixed(3));
+
     const greet = t >= 16.4, wave = seg(t, 24.6, 25.1);
     const waveRot = ph => 7 * Math.sin((t - 24.6) * Math.PI * 2.6 + ph) * wave;
 
     // SAKURA sketches flowers, then shows a drawing of everyone — including you.
     const [sbx, sby] = breath(t, 2.3);
-    sakura({ sprite: greet && !blink(t, [21.0]) || (t >= 8 && t < 8.6) || blink(t, [2.6, 11.8]) ? 'smile' : 'front', x: SAKURA[0], y: SAKURA[1], h: H, sx: sbx, sy: sby, rot: waveRot(1.5) });
+    sakura({ sprite: greet && !blink(t, [21.0]) || (t >= 6.0 && t < 8.6) || blink(t, [2.6, 11.8]) ? 'smile' : 'front', x: SAKURA[0], y: SAKURA[1], h: H, sx: sbx, sy: sby, rot: waveRot(1.5) - (t >= 5.4 && t < 8.4 ? 5 * seg(t, 5.4, 6.0) * (1 - seg(t, 7.8, 8.4)) : 0) });
     const flipP = lin(t, 19.2, 20.1), raise = seg(t, 19.2, 20.0) - seg(t, 22.8, 23.6);
     el.sketchFlower.setAttribute('visibility', flipP < .5 ? 'visible' : 'hidden');
     el.sketchFriends.setAttribute('visibility', flipP < .5 ? 'hidden' : 'visible');
@@ -143,7 +148,16 @@
     // MANJU lays out the drinks and slides the iced tea toward you.
     const [mbx, mby] = breath(t, 4.1);
     const lean = Math.max(seg(t, 12.6, 13.2) - seg(t, 14.4, 15.0), seg(t, 21.8, 22.4) - seg(t, 23.0, 23.6));
-    manju({ sprite: lean > .3 || greet || blink(t, [3.4, 9.7]) ? 'smile' : 'front', x: MANJU[0] + 40 * lean, y: MANJU[1], h: H, rot: 8 * lean + waveRot(3), sx: mbx, sy: mby });
+    const napping = t < 3.5, startle = Math.sin(Math.PI * lin(t, 3.5, 3.9)), stretch = Math.sin(Math.PI * lin(t, 4.0, 5.1));
+    const nod = napping ? Math.sin(t * 1.6) * 5 : 0;
+    const msprite = napping || (t >= 4.1 && t < 5.0) || (t >= 6.0 && t < 8.6) || lean > .3 || greet || blink(t, [9.7]) ? 'smile' : 'front';
+    manju({ sprite: msprite, x: MANJU[0] + 40 * lean, y: MANJU[1] - startle * 24, h: H, rot: 8 * lean + waveRot(3) + nod + (t >= 5.4 && t < 8.4 ? 5 * seg(t, 5.4, 6.0) * (1 - seg(t, 7.8, 8.4)) : 0), sx: mbx - .04 * stretch, sy: mby + .1 * stretch });
+    [...el.zzz.children].forEach((z, i) => {
+      const ph = (t * .45 + i / 3) % 1;
+      z.setAttribute('x', (MANJU[0] + 60 + ph * 50 + i * 6).toFixed(1));
+      z.setAttribute('y', (MANJU[1] - H - 10 - ph * 70).toFixed(1));
+      z.setAttribute('opacity', (napping ? Math.sin(Math.PI * ph) : 0).toFixed(3));
+    });
     const CUP = [[200, 1252, 12.8], [722, 1240, 13.2], [548, 1218, 13.6]];
     el.cups.forEach((c, i) => { const k = pop(t, CUP[i][2]); c.setAttribute('opacity', k > 0 ? 1 : 0); place(c, CUP[i][0], CUP[i][1], Math.max(k, .001)); });
     const g1 = seg(t, 14.4, 15.2), g2 = seg(t, 21.9, 22.8);
@@ -156,7 +170,7 @@
     place(el.bubble, JAGA[0], 850 + 10 * Math.sin(t * 3), Math.max(bub, .001) * (1 + .08 * Math.sin(Math.PI * lin(t, 17.0, 17.4))));
     el.bubble.setAttribute('opacity', bub > .01 ? 1 : 0);
 
-    el.title.setAttribute('opacity', (seg(t, .4, 1.4) * (1 - seg(t, 3.6, 4.6))).toFixed(3));
+    el.title.setAttribute('opacity', (seg(t, 5.2, 6.0) * (1 - seg(t, 8.0, 8.8))).toFixed(3));
     const line = LYRICS.find(([a, b]) => t >= a && t < b);
     if (line) {
       if (el.lyric.textContent !== line[2]) el.lyric.textContent = line[2];
@@ -175,7 +189,7 @@
     [['G', 0, 4]], [['D', 0, 4]], [['Em', 0, 4]], [['C', 0, 4]], [['C', 0, 2], ['D', 2, 2]], [['G', 0, 4]], [['G', 0, 6]]
   ];
   const BELL = {
-    0: [[0, 79, .5], [.5, 83, .5], [1, 86, 1], [2.5, 83, .5], [3, 86, 1]], 1: [[0, 86, 1], [1, 81, 1], [2, 78, 2]],
+    0: [[0, 76, 1], [1, 72, 1], [2, 74, 1], [3, 67, 1.5]], 1: [[0, 86, 1], [1, 81, 1], [2, 78, 2]],
     2: [[0, 83, 1], [1, 79, 1], [2, 84, 1], [3, 83, 1]], 12: [[0, 86, 1], [1, 91, 3]]
   };
   const PIANO_LINE = {
@@ -197,7 +211,7 @@
     const groove = bar >= 3 && bar <= 11, chorus = bar >= 6 && bar <= 11;
     chords.forEach(([name, at, len]) => {
       const [root, voicing] = CH[name];
-      voicing.forEach((n, i) => add(bar, at + i * .04, 'piano', n, Math.min(len, 4) + 1, .6 - i * .05));
+      if (bar > 0) voicing.forEach((n, i) => add(bar, at + i * .04, 'piano', n, Math.min(len, 4) + 1, .6 - i * .05));
       if (bar >= 3) {
         add(bar, at, 'bass', root, Math.min(len, 4) * .45);
         if (len === 4 && bar < 12) { add(bar, at + 1.5, 'bass', root, .4, .7); add(bar, at + 2, 'bass', root + 7, 1.4, .8); }
