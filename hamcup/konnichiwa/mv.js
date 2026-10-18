@@ -109,16 +109,15 @@
 
     // SAKURA sketches flowers, then shows a drawing of everyone — including you.
     const [sbx, sby] = breath(t, 2.3);
-    sakura({ sprite: greet && !blink(t, [21.0]) || (t >= 6.0 && t < 8.6) || blink(t, [2.6, 11.8]) ? 'smile' : 'front', x: SAKURA[0], y: SAKURA[1], h: H, sx: sbx, sy: sby, rot: waveRot(1.5) - (t >= 5.4 && t < 8.4 ? 5 * seg(t, 5.4, 6.0) * (1 - seg(t, 7.8, 8.4)) : 0) });
-    const flipP = lin(t, 19.2, 20.1), raise = seg(t, 19.2, 20.0) - seg(t, 22.8, 23.6);
-    el.sketchFlower.setAttribute('visibility', flipP < .5 ? 'visible' : 'hidden');
-    el.sketchFriends.setAttribute('visibility', flipP < .5 ? 'hidden' : 'visible');
-    el.sketchBook.setAttribute('transform', `scale(${Math.abs(Math.cos(Math.PI * flipP)).toFixed(3)} 1)`);
-    place(el.sketch, SAKURA[0], SAKURA[1] - 92 - 60 * raise, .85 + .5 * raise, waveRot(1.5) * .5);
-    el.sketchLine.setAttribute('stroke-dashoffset', (260 * (1 - lin(t, 4.4, 8.2))).toFixed(1));
-    const drawing = t < 9;
-    el.pencil.setAttribute('opacity', drawing ? 1 : 0);
-    el.pencil.setAttribute('transform', `translate(${(Math.sin(t * 7) * 22).toFixed(1)} ${(Math.cos(t * 5) * 14 + 6).toFixed(1)})`);
+    sakura({ sprite: greet && !blink(t, [21.0]) || (t >= 6.0 && t < 8.6) || blink(t, [2.6, 11.8]) ? 'smile' : 'front', x: SAKURA[0], y: SAKURA[1], h: H, sx: sbx, sy: sby, rot: waveRot(1.5) + (t < 8 ? Math.sin(t * 1.3) * 3 : 0) - (t >= 5.4 && t < 8.4 ? 5 * seg(t, 5.4, 6.0) * (1 - seg(t, 7.8, 8.4)) : 0) });
+    // The drawing is something Sakura made beforehand; she only brings it out to show you.
+    const show = seg(t, 18.9, 19.4), raise = seg(t, 19.2, 20.0) - seg(t, 22.8, 23.6);
+    el.sketchFlower.setAttribute('visibility', 'hidden');
+    el.sketchFriends.setAttribute('visibility', 'visible');
+    el.sketchBook.removeAttribute('transform');
+    el.sketch.setAttribute('opacity', show.toFixed(3));
+    place(el.sketch, SAKURA[0], SAKURA[1] - 92 - 60 * raise, Math.max(.001, (.6 + .25 * show) + .5 * raise), waveRot(1.5) * .5);
+    el.pencil.setAttribute('opacity', 0);
 
     // JAGA carries the big basket in, then pops out the onigiri.
     const [jbx, jby] = breath(t, 1);
