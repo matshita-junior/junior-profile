@@ -32,6 +32,27 @@ python3 -m http.server 4173          # リポジトリ直下で起動
 node hamcup/tools/export-mv.js hamcup-mv.mp4
 ```
 
+## fal（画像・動画生成AI）との接続
+
+`tools/fal.js` は [fal.ai](https://fal.ai) のモデルを呼び出し、生成された画像・動画・音声を保存するスクリプトです。Node.js 18以上があれば、追加のインストールは不要です。
+
+1. fal.ai にログインし、[APIキーの画面](https://fal.ai/dashboard/keys)でキーを作成します。
+2. キーを環境変数 `FAL_KEY` に設定します（例：`export FAL_KEY=...`）。キーはファイルに書かず、コミットしないでください。
+3. fal.ai のモデルページに表示されるモデルID（例：`fal-ai/flux/dev`）と、APIタブに載っている入力項目を指定して実行します。
+
+```sh
+# 文章から画像を2枚生成
+node tools/fal.js fal-ai/flux/dev prompt="a hamster sipping tea, lofi anime" image_size=portrait_16_9 num_images:=2
+
+# キャラクター画像から5秒の動画を生成
+node tools/fal.js fal-ai/kling-video/v2.1/standard/image-to-video \
+  prompt="the hamster waves at the camera" image_url@hamcup/assets/jaga-front.png duration=5
+```
+
+- `名前=文字` は文字列、`名前:=値` は数値・true/false・配列（例：`num_images:=2`）、`名前@ファイル` は手元のファイル（`hamcup/assets/` の画像など）をそのまま送ります。
+- 生成結果は `fal-output/<リクエストID>/` に、結果のJSON（`result.json`）と生成ファイルが保存されます。`--out フォルダー` で保存先を変更できます。`fal-output/` はGitの管理対象外です。
+- サイトは静的ファイルとして公開されるため、`FAL_KEY` をHTMLやブラウザで動くJavaScriptに書かないでください。生成はこのスクリプトで手元で行い、できた素材をリポジトリに追加します。
+
 ## 公開
 
 静的サイトとして、リポジトリ直下を公開ディレクトリに指定します。ビルドコマンドは不要です。`index.html`、`styles.css`、`script.js`、`favicon.svg`、`hamcup/` フォルダーを一緒に配信してください。サブパスでの配信にも対応しています。
