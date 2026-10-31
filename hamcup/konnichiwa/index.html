@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="HamCupのじゃが・さくら・まんじゅうが、ひなたのピクニックで「こんにちは」と迎えてくれる30秒の縦型ミュージックビデオ。">
+  <meta name="theme-color" content="#f5f4ee">
+  <title>ひなたのおすそわけ | HamCup MV</title>
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="../mv.css">
+</head>
+<body>
+  <a class="skip" href="#main">本文へスキップ</a>
+  <header class="header"><a class="brand" href="../../" aria-label="松下哲也ジュニア ホーム">junior<span>·</span></a><nav aria-label="メインナビゲーション"><a href="../ohayo/">おはよう <span>↗</span></a><a href="../">おやすみ <span>↗</span></a></nav><span class="header-note">MUSIC VIDEO / HAMCUP</span></header>
+  <main id="main" class="mv-page">
+    <div class="mv-layout">
+      <section class="mv-intro" aria-labelledby="mv-title">
+        <p class="eyebrow"><span class="dot"></span> HAMCUP MUSIC VIDEO #3</p>
+        <h1 id="mv-title">ひなたの<br>おすそわけ</h1>
+        <p class="mv-sub">― こんにちはの時間 ―</p>
+        <p class="mv-lead">お昼の木かげで、じゃが・さくら・まんじゅうが「こんにちは」と迎えてくれる30秒。「おはよう」「おやすみ」につづく、昼の物語です。</p>
+        <ul class="cast" aria-label="登場キャラクター">
+          <li><img src="../assets/jaga-smile.png" alt="" width="64" height="82"><span><strong>じゃが</strong>仲間思い</span></li>
+          <li><img src="../assets/sakura-smile.png" alt="" width="64" height="82"><span><strong>さくら</strong>自然と絵が好き</span></li>
+          <li><img src="../assets/manju-smile.png" alt="" width="64" height="82"><span><strong>まんじゅう</strong>穏やかで気配り上手</span></li>
+        </ul>
+      </section>
+
+      <section class="player" aria-label="ミュージックビデオ プレイヤー">
+        <div class="stage" id="stage" data-state="idle">
+          <svg id="mv" viewBox="0 0 900 1600" role="img" aria-label="お昼のチャイムで、昼寝していたまんじゅうが目を覚まし、じゃががバスケットを運び、まんじゅうが飲み物を並べ、3匹がこんにちはと迎えるアニメーション">
+            <defs>
+              <linearGradient id="g-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fd0f2"/><stop offset="1" stop-color="#e4f6fc"/></linearGradient>
+              <linearGradient id="g-grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a6d688"/><stop offset="1" stop-color="#7db55f"/></linearGradient>
+              <radialGradient id="g-sun"><stop offset="0" stop-color="#fff6c8" stop-opacity=".95"/><stop offset="1" stop-color="#fff6c8" stop-opacity="0"/></radialGradient>
+              <radialGradient id="g-shade"><stop offset="0" stop-color="#2f5a2a" stop-opacity=".28"/><stop offset="1" stop-color="#2f5a2a" stop-opacity="0"/></radialGradient>
+              <radialGradient id="g-vignette" r=".75"><stop offset=".62" stop-color="#2a3a18" stop-opacity="0"/><stop offset="1" stop-color="#2a3a18" stop-opacity=".22"/></radialGradient>
+              <pattern id="p-gingham" width="40" height="40" patternUnits="userSpaceOnUse">
+                <rect width="40" height="40" fill="#fff8f0"/>
+                <rect width="20" height="40" fill="#f08a8a" opacity=".55"/>
+                <rect width="40" height="20" fill="#f08a8a" opacity=".55"/>
+              </pattern>
+              <g id="leaf"><path d="M0 -8 C8 -6 8 6 0 8 C-8 6 -8 -6 0 -8 Z" fill="#8cc06c"/></g>
+              <g id="onigiri">
+                <path d="M0 -26 C10 -26 26 0 22 10 C18 18 -18 18 -22 10 C-26 0 -10 -26 0 -26 Z" fill="#fffdf6" stroke="#e5ddc8" stroke-width="2"/>
+                <rect x="-11" y="2" width="22" height="16" rx="2" fill="#2f3a2c"/>
+              </g>
+              <g id="glass">
+                <path d="M-26 -62 L26 -62 L22 0 L-22 0 Z" fill="#e8f6fb" opacity=".75"/>
+                <path d="M-24 -44 L24 -44 L22 -2 L-22 -2 Z" fill="#d9a85a" opacity=".85"/>
+                <rect x="-14" y="-40" width="12" height="12" rx="2" fill="#ffffff" opacity=".75"/>
+                <rect x="2" y="-34" width="11" height="11" rx="2" fill="#ffffff" opacity=".7"/>
+                <path d="M8 -62 L18 -92" stroke="#f08a8a" stroke-width="5" stroke-linecap="round"/>
+                <path d="M-26 -62 L26 -62" stroke="#ffffff" stroke-width="3" opacity=".9"/>
+              </g>
+            </defs>
+
+            <g id="cam">
+              <rect x="-400" y="-500" width="1700" height="1500" fill="url(#g-sky)"/>
+              <circle cx="760" cy="220" r="190" fill="url(#g-sun)"/>
+              <circle cx="760" cy="220" r="62" fill="#ffe592"/>
+              <g id="clouds" fill="#ffffff" opacity=".92">
+                <g><ellipse cx="200" cy="300" rx="90" ry="34"/><ellipse cx="250" cy="276" rx="56" ry="34"/><ellipse cx="150" cy="286" rx="46" ry="26"/></g>
+                <g><ellipse cx="620" cy="470" rx="76" ry="28"/><ellipse cx="660" cy="452" rx="44" ry="26"/></g>
+                <g><ellipse cx="1000" cy="360" rx="80" ry="30"/><ellipse cx="960" cy="344" rx="44" ry="24"/></g>
+              </g>
+              <path d="M-400 900 Q-100 780 250 860 T900 830 T1300 850 V1100 H-400 Z" fill="#b9dc9c"/>
+              <path d="M-400 950 Q100 860 520 930 T1300 910 V1100 H-400 Z" fill="#9fcd80"/>
+              <g id="clocktower">
+                <rect x="738" y="770" width="44" height="160" fill="#f3e6cf"/>
+                <polygon points="728,772 792,772 760,722" fill="#d9776a"/>
+                <circle cx="760" cy="800" r="15" fill="#ffffff" stroke="#9a6b45" stroke-width="3"/>
+                <path d="M760 800 V789 M760 800 V792" stroke="#3a2a20" stroke-width="2.5" stroke-linecap="round"/>
+                <rect x="752" y="890" width="16" height="40" rx="6" fill="#9a6b45"/>
+                <g id="chime-waves" fill="none" stroke="#fffaf0" stroke-width="4" stroke-linecap="round">
+                  <path d="M800 770 q12 14 0 28"/><path d="M814 760 q20 24 0 48"/><path d="M720 770 q-12 14 0 28"/><path d="M706 760 q-20 24 0 48"/>
+                </g>
+                <text id="noon" x="760" y="700" text-anchor="middle" font-size="40" fill="#fffaf0" class="mv-text">12:00</text>
+              </g>
+              <rect x="-400" y="960" width="1700" height="1000" fill="url(#g-grass)"/>
+              <path d="M520 960 v-40 M560 960 v-40 M600 960 v-40 M640 960 v-40 M680 960 v-40 M720 960 v-40 M760 960 v-40 M800 960 v-40 M840 960 v-40 M880 960 v-40 M500 930 H900 M500 948 H900" stroke="#f3e6cf" stroke-width="7" stroke-linecap="round"/>
+              <g fill="#ffffff"><circle cx="90" cy="1080" r="6"/><circle cx="820" cy="1110" r="6"/><circle cx="760" cy="1460" r="7"/><circle cx="120" cy="1500" r="6"/><circle cx="860" cy="1300" r="5"/></g>
+              <g fill="#f7c95a"><circle cx="90" cy="1080" r="2.5"/><circle cx="820" cy="1110" r="2.5"/><circle cx="760" cy="1460" r="3"/><circle cx="120" cy="1500" r="2.5"/><circle cx="860" cy="1300" r="2"/></g>
+              <g fill="#f4a9b8"><circle cx="40" cy="1260" r="7"/><circle cx="700" cy="1540" r="6"/><circle cx="880" cy="1180" r="6"/></g>
+
+              <g id="tree">
+                <ellipse cx="300" cy="1250" rx="520" ry="200" fill="url(#g-shade)"/>
+                <path d="M120 1010 C130 900 120 760 140 620 L190 620 C200 760 196 900 214 1010 Z" fill="#9a6b45"/>
+                <path d="M160 700 C210 660 250 640 290 600" stroke="#9a6b45" stroke-width="22" stroke-linecap="round"/>
+                <g fill="#6aac54"><circle cx="160" cy="500" r="170"/><circle cx="330" cy="560" r="130"/><circle cx="20" cy="580" r="120"/><circle cx="240" cy="380" r="120"/></g>
+                <g fill="#80c066"><circle cx="200" cy="460" r="90"/><circle cx="330" cy="520" r="70"/><circle cx="60" cy="520" r="70"/></g>
+              </g>
+
+              <ellipse cx="450" cy="1258" rx="350" ry="118" fill="#5a7a3a" opacity=".22"/>
+              <ellipse cx="450" cy="1250" rx="340" ry="112" fill="url(#p-gingham)"/>
+              <ellipse cx="450" cy="1250" rx="340" ry="112" fill="none" stroke="#e46f6f" stroke-width="5" opacity=".6"/>
+
+              <g id="manju" class="char"><image/></g>
+              <g id="zzz" class="mv-text" fill="#8aa0c8" font-size="34" style="stroke-width:0"><text>z</text><text>z</text><text>Z</text></g>
+              <g id="sakura" class="char"><image/></g>
+              <g id="jaga" class="char"><image/></g>
+
+              <g id="sketch">
+                <g id="sketch-book">
+                  <rect x="-62" y="-46" width="124" height="92" rx="4" fill="#fffaf0" stroke="#d9cdb2" stroke-width="3"/>
+                  <path d="M-62 -46 h124" stroke="#9cc7d9" stroke-width="8"/>
+                  <g id="sketch-flower">
+                    <path id="sketch-line" d="M0 34 C2 18 -2 6 0 -4 M0 14 q14 -10 22 -4 q-10 10 -22 4 M0 -12 m-12 0 a12 12 0 1 0 24 0 a12 12 0 1 0 -24 0" fill="none" stroke="#e48aa0" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="260" stroke-dashoffset="260"/>
+                  </g>
+                  <g id="sketch-friends" visibility="hidden">
+                    <ellipse cx="-36" cy="14" rx="15" ry="16" fill="#97591f"/>
+                    <ellipse cx="-12" cy="12" rx="15" ry="16" fill="#f3c46b"/>
+                    <ellipse cx="12" cy="14" rx="15" ry="16" fill="#fbf3f3" stroke="#c46880" stroke-width="2"/>
+                    <ellipse cx="38" cy="14" rx="15" ry="16" fill="none" stroke="#8aa0c8" stroke-width="2.5" stroke-dasharray="4 3"/>
+                    <path d="M38 -22 c-6 -8 -16 -2 -10 6 l10 10 l10 -10 c6 -8 -4 -14 -10 -6 Z" fill="#f08a8a"/>
+                    <path d="M-40 12 q2 2 4 0 M-34 12 q2 2 4 0 M-16 10 q2 2 4 0 M-10 10 q2 2 4 0 M8 12 q2 2 4 0 M14 12 q2 2 4 0" stroke="#3a2a20" stroke-width="1.6" fill="none"/>
+                  </g>
+                </g>
+                <path id="pencil" d="M0 0 L18 -30" stroke="#f7c95a" stroke-width="7" stroke-linecap="round"/>
+              </g>
+
+              <image id="cup-manju" href="../assets/manju-cup.png" x="-28" y="-52" width="56" height="52"/>
+              <image id="cup-sakura" href="../assets/sakura-cup.png" x="-34" y="-38" width="68" height="38"/>
+              <image id="cup-jaga" href="../assets/jaga-cup.png" x="-31" y="-36" width="62" height="36"/>
+              <use id="glass-you" href="#glass"/>
+              <use id="oni1" href="#onigiri"/><use id="oni2" href="#onigiri"/><use id="oni3" href="#onigiri"/>
+
+              <g id="basket">
+                <path d="M-70 -40 C-70 -120 70 -120 70 -40" fill="none" stroke="#a87442" stroke-width="10"/>
+                <path d="M-80 -44 H80 L66 20 H-66 Z" fill="#c98f52"/>
+                <path d="M-76 -26 H76 M-72 -8 H72 M-68 10 H68" stroke="#a87442" stroke-width="4"/>
+                <path d="M-80 -48 Q0 -70 80 -48" fill="#f08a8a" opacity=".8"/>
+              </g>
+
+              <g id="leaves"><use href="#leaf"/><use href="#leaf"/><use href="#leaf"/><use href="#leaf"/><use href="#leaf"/><use href="#leaf"/></g>
+
+              <g id="bubble">
+                <path d="M-150 -50 H150 Q170 -50 170 -30 V30 Q170 50 150 50 H20 L0 78 L-20 50 H-150 Q-170 50 -170 30 V-30 Q-170 -50 -150 -50 Z" fill="#ffffff" stroke="#f0b86a" stroke-width="5"/>
+                <text x="0" y="16" text-anchor="middle" font-size="46" fill="#7a4a1c" class="mv-text" style="stroke-width:0">こんにちは！</text>
+              </g>
+            </g>
+
+            <!-- Screen-space overlays -->
+            <rect width="900" height="1600" fill="url(#g-vignette)" pointer-events="none"/>
+            <g id="title" text-anchor="middle" class="mv-text">
+              <text x="450" y="200" font-size="60" fill="#fffaf0">ひなたのおすそわけ</text>
+              <text x="450" y="262" font-size="28" fill="#fff3dc" letter-spacing="4">― こんにちはの時間 ―</text>
+            </g>
+            <text id="lyric" x="450" y="1468" text-anchor="middle" font-size="50" fill="#fffaf0" class="mv-text"></text>
+            <text id="end-text" x="450" y="260" text-anchor="middle" font-size="56" fill="#fffaf0" letter-spacing="2" class="mv-text">こんにちは、いっしょにどう？</text>
+            <rect id="fade" width="900" height="1600" fill="#e4f6fc" opacity="0"/>
+          </svg>
+          <button class="big-play" id="big-play" type="button" aria-label="MVを再生"><span aria-hidden="true">▶</span> PLAY</button>
+        </div>
+
+        <div class="controls">
+          <button class="ctrl" id="toggle" type="button" aria-label="再生">▶</button>
+          <input class="seek" id="seek" type="range" min="0" max="30" step="0.05" value="0" aria-label="再生位置">
+          <span class="time" id="time">0:00 / 0:30</span>
+          <button class="ctrl" id="fullscreen" type="button" aria-label="全画面表示">⤢</button>
+        </div>
+        <p class="player-note" id="player-note">音が出ます。スペースキーで再生・一時停止できます。</p>
+      </section>
+    </div>
+
+    <section class="section mv-lyrics" aria-labelledby="lyrics-title">
+      <div class="section-label"><span>LYRICS</span><span>サビの歌詞</span></div>
+      <div class="about-content">
+        <h2 id="lyrics-title">きみの席も、ちゃんとあるよ。</h2>
+        <p class="lyrics-body">こんにちは ひなたの中で<br>いっしょに ひと休みしよう<br>きみの席も ちゃんとあるよ</p>
+      </div>
+    </section>
+
+    <section class="section mv-about" aria-labelledby="mv-about-title">
+      <div class="section-label"><span>STORYBOARD</span><span>映像構成</span></div>
+      <div class="about-content">
+        <h2 id="mv-about-title">木かげのピクニックへ、ようこそ。</h2>
+        <ol class="storyboard">
+          <li><span>0–8s</span>遠くの時計台から、お昼のチャイム。木かげで昼寝していたまんじゅうが目を覚ましてのびをし、となりでひなたぼっこしていたさくらと目が合って笑う。</li>
+          <li><span>8–16s</span>じゃがが大きなバスケットを運んでくる。おにぎりが飛び出し、まんじゅうが飲み物を並べる。</li>
+          <li><span>16–24s</span>3匹があなたに気づいて「こんにちは！」。さくらは前から描いておいた、3匹とあなたの絵を取り出して見せ、まんじゅうが冷たいお茶を差し出す。</li>
+          <li><span>24–30s</span>葉っぱが舞う木かげで、3匹が手を振る。「こんにちは、いっしょにどう？」</li>
+        </ol>
+        <p>音楽は晴れやかなポップ（BPM 110）。ウクレレ風のつま弾き、グロッケン、手拍子をWeb Audio APIでその場で演奏します。サビのメロディはハミングのガイドで、歌声は収録した音声に差し替える想定です。シリーズ：<a href="../ohayo/">おはようの一杯</a> ／ <a href="../">おやすみのお茶</a> ／ 番外編<a href="../halloween/">ハムカップのハロウィン</a>。</p>
+      </div>
+    </section>
+  </main>
+  <footer><a class="brand" href="../../">junior<span>·</span></a><p>© <span id="year">2026</span> Tetsuya Matsushita Junior</p><a class="back-top" href="#main">BACK TO TOP ↑</a></footer>
+  <script src="../../script.js"></script>
+  <script src="mv.js"></script>
+</body>
+</html>
