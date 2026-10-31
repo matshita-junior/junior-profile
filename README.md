@@ -27,6 +27,8 @@ python3 -m http.server 4173 --bind 0.0.0.0
 
 `hamcup/konnichiwa/` は第3作「ひなたのおすそわけ ― こんにちはの時間 ―」（縦型30秒）です。同じくキャラ画像とスタイルを共用し、タイムラインと曲は `hamcup/konnichiwa/mv.js` にあります。
 
+`hamcup/halloween/` は番外編「ハムカップのハロウィン ― トリック・オア・ティー ―」（縦型30秒）です。仮装（ずきん・ぼうし・マント）はキャラ画像の上にSVGで重ねて描いています。タイムラインと曲は `hamcup/halloween/mv.js` にあります。
+
 ### MP4に書き出す
 
 Node.js・Playwright（Chromium）・ffmpeg が必要です。
@@ -36,6 +38,7 @@ python3 -m http.server 4173          # リポジトリ直下で起動
 node hamcup/tools/export-mv.js hamcup-mv.mp4
 node hamcup/tools/export-mv.js hamcup-ohayo.mp4 http://localhost:4173/hamcup/ohayo/?export
 node hamcup/tools/export-mv.js hamcup-konnichiwa.mp4 http://localhost:4173/hamcup/konnichiwa/?export
+node hamcup/tools/export-mv.js hamcup-halloween.mp4 http://localhost:4173/hamcup/halloween/?export
 ```
 
 ## 公開
