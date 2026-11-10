@@ -44,9 +44,11 @@ from mathutils import noise as mnoise
 # 0. ユーザー設定（基本的にここだけ触れば調整できます）
 # =============================================================================
 CFG = {
+    # --- 品質プリセット（下の PRESETS を参照） -----------------------------------
+    "PRESET": "LITE",         # "LITE" = 軽量版（EEVEE） / "HQ" = 高品質版（Cycles）
+    "QUALITY": "PREVIEW",     # "PREVIEW"（解像度50%・サンプル1/4で確認用） / "FINAL"（本番）
     # --- レンダリング --------------------------------------------------------
-    "ENGINE": "EEVEE",        # "EEVEE"（速い・GPU 推奨） / "CYCLES"（高品質・遅い）
-    "QUALITY": "PREVIEW",     # "PREVIEW"（解像度50%・低サンプル） / "FINAL"
+    "ENGINE": None,           # None = プリセットに従う。"EEVEE" / "CYCLES" で上書きできる
     "ASPECT": "16:9",         # "16:9"（YouTube） / "9:16"（ショート・リール・TikTok）
     "OUTPUT_PATH": "//render/toyotomi_osaka_",   # 「//」は .blend ファイルと同じ場所
     "OUTPUT_VIDEO": False,    # False = PNG 連番（推奨：途中から再開できる） / True = MP4
@@ -56,16 +58,18 @@ CFG = {
     "FRAME_END": 900,         # 30fps x 30秒
     # --- 生成量（減らすと軽くなる） -------------------------------------------
     "SEED": 1583,             # 乱数シード。変えると作業員や石の配置が変わる
-    "WORKERS": 160,           # 作業員の数
-    "OXCARTS": 6,             # 牛車の数
-    "TOWN_HOUSES": 130,       # 城下町の家の数
-    "TREES": 70,              # 松の数
+    "WORKERS": None,          # 作業員の数（None = プリセットの値）
+    "OXCARTS": None,          # 牛車の数
+    "TOWN_HOUSES": None,      # 城下町の家の数
+    "TREES": None,            # 松の数
     # --- 演出の ON / OFF ----------------------------------------------------
     "USE_FOG": True,          # 朝霧（ボリューム）。Cycles では重いので注意
     "USE_CLOUDS": True,       # 流れる雲（タイムラプス感と雲の影）
     "USE_TITLES": True,       # タイトル・章テロップ（日本語フォントが必要）
     "USE_GLARE": True,        # コンポジターのグレア（金のきらめきを強調）
     "USE_DOF": False,         # 被写界深度（テロップもボケるので既定は OFF）
+    "LETTERBOX": "FINALE",    # "FINALE" = 完成カットで上下に黒帯（シネマスコープ）/ "ALWAYS" / "OFF"
+    "VIGNETTE": 0.35,         # 周辺減光の強さ（0 で無効）
     # --- 差し替え用パス（空なら手続き生成のものを使う） ------------------------
     "FONT_PATH": "",          # 例 "C:/Windows/Fonts/yumindb.ttf"。空なら自動検出
     "HDRI_PATH": "",          # 例 "C:/hdri/sunset.exr"。指定すると空を HDRI に置き換え
@@ -77,6 +81,32 @@ CFG = {
 }
 # 外部（テスト用スクリプトなど）から上書きしたい場合は TS_OVERRIDES を定義しておく
 CFG.update(globals().get("TS_OVERRIDES", {}))
+
+# --- 軽量版 / 高品質版 ---------------------------------------------------------
+# CFG で None のままの項目は、選んだプリセットの値になる（CFG に値を書けばそちらが優先）。
+PRESETS = {
+    # 軽量版：EEVEE。GPU で 1フレーム数秒が目安。重い要素（石垣の変位、モーションブラー、
+    # 篝火の点光源、ボリュームの影、レイトレース）を省き、水面は平面プローブで反射させる
+    "LITE": {
+        "ENGINE": "EEVEE", "EEVEE_SAMPLES": 32, "CYCLES_SAMPLES": 64,
+        "WORKERS": 110, "OXCARTS": 4, "TOWN_HOUSES": 90, "TREES": 50,
+        "HAUL_TEAMS": 2, "BIRDS": 14, "DUST": 28, "FIRES": 12, "FIRE_LIGHTS": False,
+        "DISPLACE": 0, "MOTION_BLUR": False, "VOL_TILE": '16', "VOL_SHADOWS": False,
+        "GLARE_STREAKS": False, "RAYTRACE": False, "PLANAR_PROBE": True,
+    },
+    # 高品質版：Cycles。石垣を実際に凹凸させ（変位）、モーションブラーで人や雲を流し、
+    # 篝火に点光源、金のハイライトに星形のグレアを加える
+    "HQ": {
+        "ENGINE": "CYCLES", "EEVEE_SAMPLES": 128, "CYCLES_SAMPLES": 384,
+        "WORKERS": 200, "OXCARTS": 6, "TOWN_HOUSES": 160, "TREES": 90,
+        "HAUL_TEAMS": 3, "BIRDS": 30, "DUST": 60, "FIRES": 18, "FIRE_LIGHTS": True,
+        "DISPLACE": 3, "MOTION_BLUR": True, "VOL_TILE": '4', "VOL_SHADOWS": True,
+        "GLARE_STREAKS": True, "RAYTRACE": True, "PLANAR_PROBE": True,
+    },
+}
+for _k, _v in PRESETS[CFG["PRESET"]].items():
+    if CFG.get(_k) is None:
+        CFG[_k] = _v
 
 # --- テロップの文言 -----------------------------------------------------------
 TITLES = {
@@ -121,6 +151,8 @@ TENSHU_LEVELS = [
     (13.5, 10.5, 4.0, 2.1, 2.6, ("S", "N")),
     (10.0, 8.0, 4.4, 5.2, 2.6, ()),          # 最上重（望楼・金の装飾）
 ]
+KARA_HAFU = {1: "S", 3: "N"}   # 唐破風（曲線の破風）を付ける重と面。その面は千鳥破風の代わりになる
+ROOF_CURVE, ROOF_LIFT, TOP_LIFT = 1.9, 1.1, 1.4   # 天守の屋根の反り（大きいほど軒先が緩く棟側が急）と隅の反り上がり
 
 # --- 時刻のキー表（ここを書き換えると 1 日の光が変わる） -----------------------
 # 太陽: (フレーム, 方位[北=0 東=90 南=180 西=270], 高度[度], 色, 強さ, 光源の角度[度])
@@ -149,7 +181,12 @@ SKY_KEYS = [
 ]
 FOG_KEYS = [(1, 0.016), (80, 0.012), (150, 0.007), (220, 0.0025), (300, 0.0006),
             (650, 0.0004), (800, 0.0007), (900, 0.0010)]      # 地表付近の霧の濃さ（夕方は薄く：低い太陽が霧で弱まるため）
-GOLD_GLOW_KEYS = [(1, 0.0), (745, 0.0), (800, 0.35), (860, 0.7), (900, 0.55)]  # 夕景で金が自ら輝く量
+GOLD_GLOW_KEYS = [(1, 0.0), (745, 0.0), (800, 0.35), (860, 0.75), (900, 0.6)]   # 夕景で金が自ら輝く量
+# 空気感：(フレーム, 霧の色, 前方散乱[光芒の強さ], 全体のかすみ)。朝は青白く光芒が強く、昼は澄み、夕方は金色にかすむ
+FOG_LOOK_KEYS = [(1, (0.78, 0.84, 0.98), 0.65, 0.0005), (150, (0.92, 0.90, 0.88), 0.55, 0.0003),
+                 (300, (0.95, 0.96, 0.98), 0.30, 0.00008), (650, (1.00, 0.95, 0.88), 0.35, 0.00012),
+                 (800, (1.00, 0.80, 0.60), 0.55, 0.0003), (900, (0.95, 0.70, 0.55), 0.60, 0.0004)]
+WINDOW_GLOW_KEYS = [(1, 0.0), (795, 0.0), (850, 2.5), (900, 4.0)]   # 城下町の窓明かり
 # 露出（実際のタイムラプス撮影のように、暗い朝夕は明るく・昼は絞る）
 EXPOSURE_KEYS = [(1, 0.7), (80, 0.3), (160, -0.2), (300, -0.55), (560, -0.55), (700, -0.35),
                  (790, 0.0), (900, 0.45)]
@@ -166,10 +203,12 @@ CAM_KEYS = [
     (570, (45, 31, 30),   165, 108, 30, 32),     # 天守へ寄る
     (650, (45, 31, 38),   200, 92, 20, 30),      # 回り込みながら見上げる
     (720, (45, 31, 46),   226, 104, 38, 32),
-    (770, (40, 28, 42),   244, 135, 40, 35),
-    (835, (25, 15, 28),   250, 232, 22, 35),     # 堀の水面越しに（映り込み）
-    (900, (15, 5, 22),    252, 385, 95, 35),     # 引きのワイド：城・堀・町
+    (770, (40, 28, 44),   250, 150, 34, 30),     # 完成。西へ回り込みながら下りる
+    (805, (45, 31, 40),   296, 215, 9, 42),      # 北西の堀の角から望遠で：石垣と櫓の上にそびえる黒と金の天守（水面に映る）
+    (840, (40, 28, 36),   284, 240, 17, 36),     # 篝火と町の灯りを手前に、ゆっくり上昇しながら引く
+    (900, (15, 5, 24),    258, 410, 108, 32),    # 引きのワイド：城・石垣・堀・城下町
 ]
+KICKER_KEYS = [(1, 0.0), (770, 0.0), (820, 4.0e5), (900, 5.0e5)]   # 完成カットの補助光（W）
 
 PREFIX = "TS_"                       # 生成物の名前の接頭辞（作り直し時の削除に使う）
 ROOT_NAME = "TS_豊臣大坂城"
@@ -180,6 +219,7 @@ ASSET = {}      # 差し替え用アセット  key -> Collection
 COL = {}        # 生成先コレクション
 CAM = {}        # カメラ関連
 GLINTS = []     # きらめきの予定 (フレーム, 位置, 大きさ)
+DUST = []       # 土埃の予定 (フレーム, 位置, 大きさ)
 _MESH = {}      # 共有メッシュのキャッシュ
 MASK_GROUP = None
 
@@ -408,6 +448,40 @@ def bm_jroof(bm, w0, d0, w1, d1, h, rings=6, seg=8, curve=1.7, lift=0.7, flare=0
         bm.faces.new(loops[-1])
 
 
+def bm_hips(bm, w0, d0, w1, d1, h, lift, curve=1.7, flare=0.04, zoff=0.1, rad=0.22, n=8):
+    """隅棟：屋根の四隅の稜線に沿った丸い棟。屋根の輪郭が締まり、和風の屋根らしくなる。
+    引数は bm_jroof と同じ意味（軒先と上端の大きさ・高さ・隅の反り上がり）。"""
+    for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+        pts = []
+        for i in range(n + 1):
+            t = i / n
+            k = (1 - t) ** 2
+            sc_ = 1 + flare * k
+            pts.append((sx * lerp(w0, w1, t) / 2 * sc_, sy * lerp(d0, d1, t) / 2 * sc_,
+                        zoff + h * t ** curve + lift * k + rad * 0.7))
+        for a, b in zip(pts, pts[1:]):
+            bm_beam(bm, a, b, rad, True, 6)
+
+
+def bm_loft_dense(bm, rings, sides=(0, 1, 2, 3), seg=2.0, flip=False):
+    """bm_loft と同じだが、各辺を seg m ごとに区切る（石垣を変位で凹凸させるための細かい格子）。"""
+    for s_ in sides:
+        grid = []
+        n = None
+        for r in rings:
+            w, d, z = r[0], r[1], r[2]
+            cx, cy = (r[3], r[4]) if len(r) > 3 else (0.0, 0.0)
+            cs = [(cx - w / 2, cy - d / 2), (cx + w / 2, cy - d / 2), (cx + w / 2, cy + d / 2), (cx - w / 2, cy + d / 2)]
+            (x0, y0), (x1, y1) = cs[s_], cs[(s_ + 1) % 4]
+            if n is None:
+                n = max(1, int(math.ceil(math.hypot(x1 - x0, y1 - y0) / seg)))
+            grid.append([bm.verts.new((lerp(x0, x1, k / n), lerp(y0, y1, k / n), z)) for k in range(n + 1)])
+        for a, b in zip(grid, grid[1:]):
+            for k in range(n):
+                q = (a[k], a[k + 1], b[k + 1], b[k])
+                bm.faces.new(q[::-1] if flip else q)
+
+
 def bm_prism(bm, w, length, h, z0=0.0, c=(0, 0)):
     """切妻屋根（三角柱）。棟は Y 方向。町家・塀の屋根・高麗門に使う。"""
     vs = []
@@ -588,11 +662,28 @@ def SEP(nt, vec):
     return n.outputs
 
 
-def ATTR(nt, name):
+def ATTR(nt, name, kind='OBJECT'):
+    """オブジェクト（kind='INSTANCER' ならインスタンス元の Empty）のカスタムプロパティを読む。"""
     n = nt.nodes.new("ShaderNodeAttribute")
-    n.attribute_type = 'OBJECT'
+    n.attribute_type = kind
     n.attribute_name = name
     return n.outputs["Fac"]
+
+
+def MIXF(nt, fac, a, b):
+    """数値のミックス（ShaderNodeMix / FLOAT）。"""
+    n = nt.nodes.new("ShaderNodeMix")
+    n.data_type = 'FLOAT'
+    _in(nt, n.inputs[0], fac)
+    _in(nt, n.inputs[2], a)
+    _in(nt, n.inputs[3], b)
+    return n.outputs[0]
+
+
+def SEPC(nt, col):
+    n = nt.nodes.new("ShaderNodeSeparateColor")
+    nt.links.new(col, n.inputs[0])
+    return n.outputs
 
 
 def NOISE(nt, vec, scale, detail=4.0, rough=0.55):
@@ -621,7 +712,9 @@ def BUMP(nt, height, strength, distance, bsdf):
 
 
 def build_mask_group():
-    """建設マスク（ノードグループ）。Visible = (1-b_transp) * (1 - b_reveal_on*(Z>b_reveal_z))"""
+    """建設マスク（ノードグループ）。
+    Visible = (1-b_transp) * (1 - b_reveal_on*(Z>b_reveal_z)) * (1-インスタンス元の b_itransp)
+    最後の項は作業員などのインスタンスを、タイムラプス写真の人のように半透明で出し入れするため。"""
     ng = bpy.data.node_groups.new(PREFIX + "BuildMask", "ShaderNodeTree")
     ng.interface.new_socket(name="Z", in_out='INPUT', socket_type='NodeSocketFloat')
     ng.interface.new_socket(name="Visible", in_out='OUTPUT', socket_type='NodeSocketFloat')
@@ -631,6 +724,7 @@ def build_mask_group():
     hidden = MATH(ng, 'MULTIPLY', above, ATTR(ng, "b_reveal_on"))
     vis = MATH(ng, 'MULTIPLY', MATH(ng, 'SUBTRACT', 1.0, hidden),
                MATH(ng, 'SUBTRACT', 1.0, ATTR(ng, "b_transp")), clamp_=True)
+    vis = MATH(ng, 'MULTIPLY', vis, MATH(ng, 'SUBTRACT', 1.0, ATTR(ng, "b_itransp", 'INSTANCER')), clamp_=True)
     ng.links.new(vis, go.inputs["Visible"])
     return ng
 
@@ -669,6 +763,81 @@ def finish(m, nt, shader, z=None):
                 setattr(m, attr, val)
             except Exception:
                 pass
+
+
+def finish_alpha(m, nt, shader, alpha):
+    """半透明のもの（土埃・炎・周辺減光）用。alpha × 建設マスク で透明と混ぜる。
+    EEVEE では「ブレンド」方式にする（「ディザ」方式だと、画面を覆う板が粒状のノイズになるため）。"""
+    out = nt.nodes.get("Material Output") or nt.nodes.new("ShaderNodeOutputMaterial")
+    g = nt.nodes.new("ShaderNodeGroup")
+    g.node_tree = MASK_GROUP
+    nt.links.new(SEP(nt, POS(nt))["Z"], g.inputs["Z"])
+    tr = nt.nodes.new("ShaderNodeBsdfTransparent")
+    mix = nt.nodes.new("ShaderNodeMixShader")
+    nt.links.new(MATH(nt, 'MULTIPLY', alpha, g.outputs["Visible"], clamp_=True), mix.inputs[0])
+    nt.links.new(tr.outputs[0], mix.inputs[1])
+    nt.links.new(shader, mix.inputs[2])
+    nt.links.new(mix.outputs[0], out.inputs["Surface"])
+    for attr, val in (("surface_render_method", 'BLENDED'), ("blend_method", 'BLEND'),
+                      ("use_transparent_shadow", True), ("shadow_method", 'NONE')):
+        if hasattr(m, attr):
+            try:
+                setattr(m, attr, val)
+            except Exception:
+                pass
+
+
+def gold_material(key, rough=0.18, tiles=False, scales=False, paint=False):
+    """金箔。約11cm角の箔を貼った継ぎ目、細かなきらめき、発光（きらめき＋夕景）。
+    tiles = 軒丸瓦の丸い列 / scales = 鯱の鱗 / paint = 最上重の障壁画（金地に墨と緑青の絵）"""
+    m, nt, b = new_mat(key, (1.0, 0.766, 0.336), rough, 1.0)       # 金の反射率（F0）に近い色
+    co = COORD(nt)
+    o = SEP(nt, co)
+    uv = nt.nodes.new("ShaderNodeCombineXYZ")                        # 壁・屋根どちらの向きでも格子になる座標
+    nt.links.new(MATH(nt, 'ADD', o["X"], o["Y"]), uv.inputs[0])
+    nt.links.new(MATH(nt, 'ADD', o["Z"], MATH(nt, 'MULTIPLY', MATH(nt, 'SUBTRACT', o["X"], o["Y"]), 0.35)), uv.inputs[1])
+    br = nt.nodes.new("ShaderNodeTexBrick")
+    br.offset, br.squash = 0.0, 1.0
+    for name, val in (("Scale", 1.0), ("Brick Width", 0.11), ("Row Height", 0.11),
+                      ("Mortar Size", 0.005), ("Mortar Smooth", 0.3)):
+        br.inputs[name].default_value = val
+    br.inputs["Color1"].default_value = (1.0, 0.79, 0.36, 1.0)
+    br.inputs["Color2"].default_value = (0.92, 0.66, 0.27, 1.0)
+    br.inputs["Mortar"].default_value = (0.80, 0.52, 0.20, 1.0)
+    nt.links.new(uv.outputs[0], br.inputs["Vector"])
+    seam = br.outputs[1]                     # 継ぎ目 = 1（4.x は Fac、5.x は Factor という名前）
+    color = br.outputs["Color"]
+    rough_s = MATH(nt, 'ADD', rough, MATH(nt, 'MULTIPLY', seam, 0.2))
+    height = MATH(nt, 'ADD', MATH(nt, 'MULTIPLY', NOISE(nt, co, 90.0, 2.0), 0.25),   # 細かなきらめき
+                  MATH(nt, 'MULTIPLY', seam, -0.3))
+    if tiles:      # 軒丸瓦の丸い先端が並ぶ凹凸（面の向きで列の方向を切り替える）
+        p = SEP(nt, POS(nt))
+        nrm = SEP(nt, nt.nodes.new("ShaderNodeNewGeometry").outputs["Normal"])
+        ew = MATH(nt, 'GREATER_THAN', MATH(nt, 'ABSOLUTE', nrm["X"]), MATH(nt, 'ABSOLUTE', nrm["Y"]))
+        crd = MIXF(nt, ew, p["X"], p["Y"])
+        rows = MATH(nt, 'POWER', MATH(nt, 'ABSOLUTE', MATH(nt, 'SINE', MATH(nt, 'MULTIPLY', crd, 2 * math.pi / 0.36))), 0.5)
+        height = MATH(nt, 'ADD', height, rows)
+    if scales:     # 鯱の鱗
+        v = nt.nodes.new("ShaderNodeTexVoronoi")
+        v.inputs["Scale"].default_value = 7.0
+        nt.links.new(co, v.inputs["Vector"])
+        height = MATH(nt, 'ADD', height, MATH(nt, 'MULTIPLY', v.outputs["Distance"], 0.9))
+    if paint:      # 障壁画：金地の上に墨・緑青の筆致（ノイズのしきい値で面と線を作る）
+        stroke = MAPR(nt, NOISE(nt, co, 1.3, 8.0, 0.6), 0.52, 0.56)
+        ink = MIXC(nt, NOISE(nt, co, 0.6, 3.0), (0.05, 0.025, 0.012), (0.03, 0.075, 0.05))
+        color = MIXC(nt, MATH(nt, 'MULTIPLY', stroke, 0.85), color, ink)
+        nt.links.new(MATH(nt, 'SUBTRACT', 1.0, MATH(nt, 'MULTIPLY', stroke, 0.85)), b.inputs["Metallic"])
+        rough_s = MATH(nt, 'ADD', rough_s, MATH(nt, 'MULTIPLY', stroke, 0.45))
+    nt.links.new(color, b.inputs["Base Color"])
+    nt.links.new(rough_s, b.inputs["Roughness"])
+    BUMP(nt, height, 0.35, 0.02, b)
+    glow = nt.nodes.new("ShaderNodeValue")
+    glow.name = glow.label = "GoldGlow"
+    em = MATH(nt, 'ADD', MATH(nt, 'MULTIPLY', ATTR(nt, "b_glint_v"), 14.0), glow.outputs[0])
+    b.inputs["Emission Color"].default_value = (1.0, 0.62, 0.22, 1.0)
+    nt.links.new(em, b.inputs["Emission Strength"])
+    finish(m, nt, b.outputs[0])
+    return m
 
 
 def tex_override(nt, key, b, scale=0.25):
@@ -718,19 +887,11 @@ def build_materials():
     tex_override(nt, "kuro", b)
     finish(m, nt, b.outputs[0])
 
-    # --- 金箔：ラフネスのムラ＋きらめき発光（b_glint_v）＋夕景の発光（GoldGlow） ---
-    m, nt, b = new_mat("Kinpaku", (1.0, 0.70, 0.28), 0.2, 1.0)
-    vor = nt.nodes.new("ShaderNodeTexVoronoi")
-    vor.inputs["Scale"].default_value = 3.5
-    nt.links.new(COORD(nt), vor.inputs["Vector"])
-    nt.links.new(MAPR(nt, vor.outputs["Distance"], 0.0, 1.0, 0.12, 0.30), b.inputs["Roughness"])
-    glow = nt.nodes.new("ShaderNodeValue")
-    glow.name = glow.label = "GoldGlow"
-    glow.outputs[0].default_value = 0.0
-    em = MATH(nt, 'ADD', MATH(nt, 'MULTIPLY', ATTR(nt, "b_glint_v"), 14.0), glow.outputs[0])
-    b.inputs["Emission Color"].default_value = (1.0, 0.62, 0.22, 1.0)
-    nt.links.new(em, b.inputs["Emission Strength"])
-    finish(m, nt, b.outputs[0])
+    # --- 金箔 4種：装飾・軒丸瓦・鯱（鏡面に近く鱗つき）・最上重の障壁画 -------------
+    gold_material("Kinpaku", 0.18)
+    gold_material("KinpakuTile", 0.20, tiles=True)
+    gold_material("KinpakuMirror", 0.09, scales=True)
+    gold_material("KinpakuPaint", 0.22, paint=True)
 
     # --- 瓦（いぶし瓦）：面の向きで丸瓦の列方向を切り替える ---------------------
     m, nt, b = new_mat("Kawara", (0.055, 0.06, 0.07), 0.38, 0.35)
@@ -747,34 +908,77 @@ def build_materials():
                      b.inputs["Base Color"])
     finish(m, nt, b.outputs[0])
 
-    # --- 石垣（野面積み）：ボロノイの各セルを1つの石に。石の中心高さで積み上げる ---
+    # --- 石垣（野面積み）：大石のすき間に小さな間詰石を詰める二段構えのボロノイ ------
+    #     石の中心の高さで積み上げ判定（石が1個ずつ置かれていく）。水際は濡れて暗く、苔が付く
     m, nt, b = new_mat("Ishigaki", (0.4, 0.38, 0.35), 0.85)
-    sc = nt.nodes.new("ShaderNodeVectorMath")
-    sc.operation = 'MULTIPLY'
-    nt.links.new(COORD(nt), sc.inputs[0])
-    sc.inputs[1].default_value = (0.55, 0.55, 0.85)      # 横長の石（約1.8m x 1.2m）
-    v1 = nt.nodes.new("ShaderNodeTexVoronoi")
-    v1.inputs["Scale"].default_value = 1.0
-    v1.inputs["Randomness"].default_value = 0.85
-    nt.links.new(sc.outputs[0], v1.inputs["Vector"])
-    v2 = nt.nodes.new("ShaderNodeTexVoronoi")
-    v2.feature = 'DISTANCE_TO_EDGE'
-    v2.inputs["Scale"].default_value = 1.0
-    v2.inputs["Randomness"].default_value = 0.85
-    nt.links.new(sc.outputs[0], v2.inputs["Vector"])
-    joint = MAPR(nt, v2.outputs["Distance"], 0.0, 0.07)               # 0 = 目地
-    cell = nt.nodes.new("ShaderNodeSeparateColor")
-    nt.links.new(v1.outputs["Color"], cell.inputs[0])
-    stone = MIXC(nt, cell.outputs[0], (0.30, 0.29, 0.27), (0.50, 0.48, 0.44))
-    stone = MIXC(nt, MATH(nt, 'MULTIPLY', cell.outputs[1], 0.5), stone, (0.42, 0.34, 0.26))
-    detail = NOISE(nt, COORD(nt), 4.0)
-    stone = MIXC(nt, MATH(nt, 'MULTIPLY', detail, 0.35), stone, (0.2, 0.2, 0.19))
+    co = COORD(nt)
+
+    def vmul(vec, s3):
+        n = nt.nodes.new("ShaderNodeVectorMath")
+        n.operation = 'MULTIPLY'
+        nt.links.new(vec, n.inputs[0])
+        n.inputs[1].default_value = s3
+        return n.outputs[0]
+
+    def vor(vec, feature='F1', rnd=0.9):
+        n = nt.nodes.new("ShaderNodeTexVoronoi")
+        n.feature = feature
+        n.inputs["Scale"].default_value = 1.0
+        n.inputs["Randomness"].default_value = rnd
+        nt.links.new(vec, n.inputs["Vector"])
+        return n
+    SB, SS = (0.5, 0.5, 0.78), (1.7, 1.7, 2.3)        # 大石（約2m×1.3m）・間詰石（約0.6m×0.45m）
+    big, small = vmul(co, SB), vmul(co, SS)
+    vb, vbe = vor(big), vor(big, 'DISTANCE_TO_EDGE')
+    vs_, vse = vor(small, rnd=1.0), vor(small, 'DISTANCE_TO_EDGE', 1.0)
+    edge_b = vbe.outputs["Distance"]
+    pack = MATH(nt, 'LESS_THAN', edge_b, 0.12)               # 大石どうしのすき間 → 間詰石
+    joint = MIXF(nt, pack, MAPR(nt, edge_b, 0.12, 0.17), MAPR(nt, vse.outputs["Distance"], 0.0, 0.09))   # 0 = 目地
+    cb, cs_ = SEPC(nt, vb.outputs["Color"]), SEPC(nt, vs_.outputs["Color"])
+    cR, cG = MIXF(nt, pack, cb[0], cs_[0]), MIXF(nt, pack, cb[1], cs_[1])     # 石ごとの乱数
+    col = MIXC(nt, cR, (0.27, 0.26, 0.24), (0.56, 0.54, 0.50))               # 花崗岩の灰色の幅
+    col = MIXC(nt, MATH(nt, 'MULTIPLY', MATH(nt, 'GREATER_THAN', cG, 0.62), 0.8), col, (0.47, 0.38, 0.28))  # 茶色い石
+    detail = NOISE(nt, co, 3.5, 6.0)
+    col = MIXC(nt, MATH(nt, 'MULTIPLY', detail, 0.45), col, (0.17, 0.17, 0.16))   # 石肌の斑
+    wz = SEP(nt, POS(nt))["Z"]
+    wet = MAPR(nt, wz, L["WATER_Z"] + 1.8, L["WATER_Z"] - 0.2)              # 水際から下は濡れて暗い
+    col = MIXC(nt, MATH(nt, 'MULTIPLY', wet, 0.6), col, (0.05, 0.055, 0.05))
+    moss = MATH(nt, 'MULTIPLY', MAPR(nt, wz, L["WATER_Z"] + 5.0, L["WATER_Z"] + 0.5),
+                MAPR(nt, NOISE(nt, co, 0.5, 3.0), 0.48, 0.66))
+    col = MIXC(nt, MATH(nt, 'MULTIPLY', moss, 0.55), col, (0.09, 0.12, 0.05))   # 水際の苔
     if not tex_override(nt, "ishigaki", b):
-        nt.links.new(MIXC(nt, joint, (0.05, 0.05, 0.045), stone), b.inputs["Base Color"])
-    BUMP(nt, MATH(nt, 'ADD', MATH(nt, 'POWER', joint, 0.5), MATH(nt, 'MULTIPLY', detail, 0.25)), 0.6, 0.15, b)
-    cz = MATH(nt, 'ADD', MATH(nt, 'DIVIDE', SEP(nt, v1.outputs["Position"])["Z"], 0.85),
-              MATH(nt, 'MULTIPLY', cell.outputs[1], 0.6))
+        nt.links.new(MIXC(nt, joint, (0.03, 0.028, 0.025), col), b.inputs["Base Color"])
+    nt.links.new(MATH(nt, 'SUBTRACT', 0.88, MATH(nt, 'MULTIPLY', wet, 0.5)), b.inputs["Roughness"])
+    bulge = MIXF(nt, pack, MAPR(nt, vb.outputs["Distance"], 0.0, 0.8, 1.0, 0.0),
+                 MAPR(nt, vs_.outputs["Distance"], 0.0, 0.8, 1.0, 0.0))        # 石の中央がふくらむ
+    height = MATH(nt, 'ADD', MATH(nt, 'MULTIPLY', MATH(nt, 'POWER', joint, 0.4),
+                                  MATH(nt, 'ADD', 0.5, MATH(nt, 'MULTIPLY', bulge, 0.5))),
+                  MATH(nt, 'MULTIPLY', detail, 0.12))
+    BUMP(nt, height, 0.75, 0.2, b)
+    cz = MATH(nt, 'ADD', MIXF(nt, pack, MATH(nt, 'DIVIDE', SEP(nt, vb.outputs["Position"])["Z"], SB[2]),
+                              MATH(nt, 'DIVIDE', SEP(nt, vs_.outputs["Position"])["Z"], SS[2])),
+              MATH(nt, 'MULTIPLY', cG, 0.6))
     finish(m, nt, b.outputs[0], z=cz)
+    if CFG["DISPLACE"] > 0:      # 高品質版：石を実際に凹凸させる（細分化モディファイアと組み合わせ）
+        dp = nt.nodes.new("ShaderNodeDisplacement")
+        nt.links.new(height, dp.inputs["Height"])
+        dp.inputs["Midlevel"].default_value = 0.55
+        dp.inputs["Scale"].default_value = 0.45
+        nt.links.new(dp.outputs[0], nt.nodes["Material Output"].inputs["Displacement"])
+        for holder in (m, getattr(m, "cycles", None)):
+            if holder is not None and hasattr(holder, "displacement_method"):
+                holder.displacement_method = 'BOTH'
+                break
+
+    # --- 隅石（石垣の角に積む大きな切石） ---------------------------------------
+    m, nt, b = new_mat("IshigakiBlock", (0.5, 0.48, 0.44), 0.85)
+    co = COORD(nt)
+    n1 = NOISE(nt, co, 2.5, 6.0)
+    col = MIXC(nt, n1, (0.36, 0.35, 0.32), (0.60, 0.58, 0.54))
+    wet = MAPR(nt, SEP(nt, POS(nt))["Z"], L["WATER_Z"] + 1.8, L["WATER_Z"] - 0.2)
+    nt.links.new(MIXC(nt, MATH(nt, 'MULTIPLY', wet, 0.6), col, (0.05, 0.055, 0.05)), b.inputs["Base Color"])
+    BUMP(nt, MATH(nt, 'ADD', n1, MATH(nt, 'MULTIPLY', NOISE(nt, co, 9.0), 0.3)), 0.6, 0.08, b)
+    finish(m, nt, b.outputs[0])
 
     # --- 漆喰＋黒い腰板（塀・櫓・御殿・町家）。band_z より下が黒 ----------------
     m, nt, b = new_mat("Shikkui", (0.8, 0.78, 0.72), 0.7)
@@ -802,16 +1006,24 @@ def build_materials():
         nt.links.new(MIXC(nt, t, dirt, grass), b.inputs["Base Color"])
     finish(m, nt, b.outputs[0])
 
-    # --- 水（堀）：4D ノイズを時間で動かしてさざ波 -----------------------------
-    m, nt, b = new_mat("Water", (0.012, 0.045, 0.05), 0.04)
-    b.inputs["IOR"].default_value = 1.33
-    wn = nt.nodes.new("ShaderNodeTexNoise")
-    wn.name = "WaterNoise"
-    wn.noise_dimensions = '4D'
-    wn.inputs["Scale"].default_value = 0.35
-    wn.inputs["Detail"].default_value = 3.0
-    nt.links.new(COORD(nt), wn.inputs["Vector"])
-    BUMP(nt, wn.outputs["Fac"], 0.12, 0.2, b)
+    # --- 水（堀）：大きなうねり＋細かなさざ波（4D ノイズを時間で動かす）。粗さを低くして
+    #     城と空をくっきり映す。正面は暗く、斜めから見るほど反射が強い（フレネル） ---------
+    m, nt, b = new_mat("Water", (0.006, 0.022, 0.026), 0.02)
+    b.inputs["IOR"].default_value = 1.333
+    co = COORD(nt)
+    hs = []
+    for name, scale, detail in (("WaterNoise", 0.12, 2.0), ("WaterNoise2", 1.1, 3.0)):
+        wn = nt.nodes.new("ShaderNodeTexNoise")
+        wn.name = name
+        wn.noise_dimensions = '4D'
+        wn.inputs["Scale"].default_value = scale
+        wn.inputs["Detail"].default_value = detail
+        nt.links.new(co, wn.inputs["Vector"])
+        hs.append(wn.outputs["Fac"])
+    BUMP(nt, MATH(nt, 'ADD', hs[0], MATH(nt, 'MULTIPLY', hs[1], 0.35)), 0.16, 0.15, b)
+    lw = nt.nodes.new("ShaderNodeLayerWeight")
+    lw.inputs["Blend"].default_value = 0.3
+    nt.links.new(MIXC(nt, lw.outputs["Facing"], (0.008, 0.03, 0.034), (0.004, 0.012, 0.014)), b.inputs["Base Color"])
     finish(m, nt, b.outputs[0])
 
     # --- 単色系 ---------------------------------------------------------------
@@ -843,6 +1055,53 @@ def build_materials():
     simple_mat("Straw", (0.72, 0.60, 0.35), 0.85, 0)       # 陣笠・角
     simple_mat("Ox", (0.08, 0.05, 0.035), 0.7, 0)
     simple_mat("Pane", (0.02, 0.018, 0.016), 0.5, 0)       # 窓の奥
+    simple_mat("Bird", (0.015, 0.015, 0.018), 0.7, 0)      # 鳥（烏）
+    # 城下町の窓明かり（夕方に灯る。WindowGlow をキーで変化）
+    m, nt, b = new_mat("TownWindow", (0.02, 0.018, 0.016), 0.5)
+    wg = nt.nodes.new("ShaderNodeValue")
+    wg.name = wg.label = "WindowGlow"
+    b.inputs["Emission Color"].default_value = (1.0, 0.58, 0.26, 1.0)
+    nt.links.new(wg.outputs[0], b.inputs["Emission Strength"])
+    finish(m, nt, b.outputs[0])
+    # 土埃：縁ほど透明な、柔らかい玉
+    m, nt, b = new_mat("Dust", (0.58, 0.50, 0.38), 1.0)
+    lw = nt.nodes.new("ShaderNodeLayerWeight")
+    lw.inputs["Blend"].default_value = 0.5
+    finish_alpha(m, nt, b.outputs[0], MATH(nt, 'MULTIPLY', MATH(nt, 'POWER', MATH(nt, 'SUBTRACT', 1.0, lw.outputs["Facing"]), 2.0), 0.5))
+    # 篝火の炎：揺らぎは b_flick（オブジェクトのプロパティ）で
+    m = bpy.data.materials.new(PREFIX + "Flame")
+    if hasattr(m, "use_nodes") and not m.use_nodes:
+        m.use_nodes = True
+    nt = m.node_tree
+    for n in list(nt.nodes):
+        if n.type != 'OUTPUT_MATERIAL':
+            nt.nodes.remove(n)
+    e = nt.nodes.new("ShaderNodeEmission")
+    e.inputs["Color"].default_value = (1.0, 0.45, 0.12, 1.0)
+    nt.links.new(MATH(nt, 'MULTIPLY', ATTR(nt, "b_flick"), 30.0), e.inputs["Strength"])
+    lw = nt.nodes.new("ShaderNodeLayerWeight")
+    lw.inputs["Blend"].default_value = 0.4
+    finish_alpha(m, nt, e.outputs[0], MATH(nt, 'SUBTRACT', 1.0, MATH(nt, 'MULTIPLY', lw.outputs["Facing"], 0.9)))
+    MAT["Flame"] = m
+    # 周辺減光（カメラ前の板に貼る。中心は透明、四隅ほど黒）
+    m = bpy.data.materials.new(PREFIX + "Vignette")
+    if hasattr(m, "use_nodes") and not m.use_nodes:
+        m.use_nodes = True
+    nt = m.node_tree
+    for n in list(nt.nodes):
+        if n.type != 'OUTPUT_MATERIAL':
+            nt.nodes.remove(n)
+    e = nt.nodes.new("ShaderNodeEmission")
+    e.inputs["Color"].default_value = (0.0, 0.0, 0.0, 1.0)
+    g_ = SEP(nt, COORD(nt, "Generated"))
+    cxy = nt.nodes.new("ShaderNodeCombineXYZ")
+    nt.links.new(MATH(nt, 'MULTIPLY', MATH(nt, 'SUBTRACT', g_["X"], 0.5), 2.0), cxy.inputs[0])
+    nt.links.new(MATH(nt, 'MULTIPLY', MATH(nt, 'SUBTRACT', g_["Y"], 0.5), 2.0), cxy.inputs[1])
+    ln = nt.nodes.new("ShaderNodeVectorMath")
+    ln.operation = 'LENGTH'
+    nt.links.new(cxy.outputs[0], ln.inputs[0])
+    finish_alpha(m, nt, e.outputs[0], MAPR(nt, ln.outputs["Value"], 0.55, 1.45, 0.0, float(CFG["VIGNETTE"])))
+    MAT["Vignette"] = m
 
     # 雲（少し発光させて陰を青く柔らかく）
     m, nt, b = new_mat("Cloud", (0.92, 0.92, 0.95), 1.0)
@@ -875,12 +1134,18 @@ def build_materials():
         nt.nodes.remove(n)
     out = nt.nodes.new("ShaderNodeOutputMaterial")
     vol = nt.nodes.new("ShaderNodeVolumePrincipled")
-    vol.inputs["Color"].default_value = (0.86, 0.88, 0.92, 1.0)
-    vol.inputs["Anisotropy"].default_value = 0.35
+    fc = nt.nodes.new("ShaderNodeRGB")
+    fc.name = "FogColor"
+    fa = nt.nodes.new("ShaderNodeValue")
+    fa.name = fa.label = "FogAniso"            # 前方散乱：太陽の方向が明るく光り、光芒が出る
+    fh = nt.nodes.new("ShaderNodeValue")
+    fh.name = fh.label = "FogHaze"             # 高さによらない薄いかすみ（遠くほど空の色に溶ける）
+    nt.links.new(fc.outputs[0], vol.inputs["Color"])
+    nt.links.new(fa.outputs[0], vol.inputs["Anisotropy"])
     fall = MATH(nt, 'POWER', MAPR(nt, SEP(nt, POS(nt))["Z"], 0.0, 22.0, 1.0, 0.0), 2.0)
     dens_v = nt.nodes.new("ShaderNodeValue")
     dens_v.name = dens_v.label = "FogDensity"
-    dens = MATH(nt, 'ADD', MATH(nt, 'MULTIPLY', fall, dens_v.outputs[0]), 0.00012)
+    dens = MATH(nt, 'ADD', MATH(nt, 'MULTIPLY', fall, dens_v.outputs[0]), fh.outputs[0])
     nt.links.new(dens, vol.inputs["Density"])
     nt.links.new(vol.outputs[0], out.inputs["Volume"])
     MAT["Fog"] = m
@@ -895,7 +1160,8 @@ def build_materials():
 #                 rise（下からせり上がる）/ fade（透明→不透明）/
 #                 reveal（下から積み上がる。マテリアルのマスクを使う）/ none
 #      b_axis   : grow の方向 "X" "Y" "Z"     b_dz : drop / rise の移動量
-#      b_end    : 消える（資材が使われる）フレーム    b_end_mode : shrink / sink / fade / none
+#      b_end    : 消える（資材が使われる）フレーム    b_end_mode : shrink / sink / fade / carry / none
+#      b_end_target : carry のとき運ばれていく先（ワールド座標）
 #      b_glint  : このフレームで金がきらめく
 # =============================================================================
 def sched(ob, start, dur=12, mode="grow", end=None, end_dur=8, end_mode="shrink", **kw):
@@ -993,7 +1259,17 @@ def apply_build(ob):
         elif em == "fade":
             key_prop(ob, "b_transp", 0.0, e - ed)
             key_prop(ob, "b_transp", 1.0, e)
-        key_hide(ob, True, e if em == "shrink" else e + 1)
+        elif em == "carry":       # 使われる場所（b_end_target）まで運ばれてから消える
+            tr = float(ob.get("b_end_travel", 22))
+            ob.location = loc
+            ob.keyframe_insert("location", frame=e - ed - tr)
+            ob.location = Vector(ob["b_end_target"])
+            ob.keyframe_insert("location", frame=e - ed)
+            ob.scale = scl
+            ob.keyframe_insert("scale", frame=e - ed)
+            ob.scale = scl * tiny
+            ob.keyframe_insert("scale", frame=e)
+        key_hide(ob, True, e if em in ("shrink", "carry") else e + 1)
 
     g = ob.get("b_glint", None)
     if g is not None:      # 金のきらめき（発光のパルス）
@@ -1109,12 +1385,13 @@ def build_assets():
         (lambda bm: bm_box(bm, 7.0, 9.0, 3.4), "Shikkui"),
         (lambda bm: bm_prism(bm, 8.4, 10.2, 1.9, z0=3.4), "Ita"),
         (lambda bm: bm_box(bm, 7.6, 1.3, 0.12, c=(0, -5.0, 2.4)), "Ita"),
+        (lambda bm: [bm_box(bm, 2.4, 0.1, 0.9, c=(-1.6, -4.52, 1.3)), bm_box(bm, 1.2, 0.1, 0.5, c=(1.9, -4.52, 2.6))], "TownWindow"),
     ], props={"band_z": 1.3})
     make_asset("machiya_b", [
         (lambda bm: bm_box(bm, 6.0, 10.0, 4.6), "Shikkui"),
         (lambda bm: bm_prism(bm, 7.2, 11.0, 2.0, z0=4.6), "Ita"),
         (lambda bm: bm_box(bm, 6.6, 1.2, 0.12, c=(0, -5.4, 2.6)), "Ita"),
-        (lambda bm: bm_box(bm, 3.6, 0.1, 0.6, c=(0, -5.02, 3.4)), "Pane"),
+        (lambda bm: [bm_box(bm, 3.6, 0.1, 0.6, c=(0, -5.02, 3.4)), bm_box(bm, 2.0, 0.1, 1.0, c=(-1.2, -5.02, 1.2))], "TownWindow"),
     ], props={"band_z": 1.6})
 
     # 松
@@ -1126,14 +1403,32 @@ def build_assets():
                      bm_ico(bm, 1.3, c=(0.0, 0.2, 8.3), scl=(1.2, 1.0, 0.5))], "Pine", True),
     ])
 
-    # 金の鯱（頭が +X、尾が上に反る）。高さ約2.6m
+    # 金の鯱（頭が +X、胴が反って尾が天を向く）。高さ約2.8m。鏡面に近い金に鱗の凹凸
+    spine = []
+    for i in range(12):
+        t = i / 11
+        spine.append((0.55 - 1.0 * t + 0.75 * t ** 3, 0.38 + 2.3 * t, 0.46 * (1 - t) ** 0.7 + 0.07))
+
+    def shachi_body(bm):
+        for x, zz, rr in spine:
+            bm_sphere(bm, rr, c=(x, 0, zz), scl=(1.0, 0.78, 1.0), u=14, v=9)
+        bm_sphere(bm, 0.5, c=(0.62, 0, 0.42), scl=(1.15, 0.85, 0.85), u=16, v=10)     # 頭
+
+    def shachi_fins(bm):
+        x, zz, _ = spine[-1]
+        for a in (-0.55, 0.55):                                                         # 尾びれ（扇形に開く）
+            bm_sphere(bm, 1.0, c=(x - 0.05, a * 0.55, zz + 0.32), scl=(0.10, 0.42, 0.36), rot=(a * 0.9, 0, 0))
+        for i in (3, 5, 7):                                                             # 背びれ
+            x, zz, rr = spine[i]
+            bm_sphere(bm, 1.0, c=(x - rr * 0.95, 0, zz), scl=(0.24, 0.05, 0.14), rot=(0, 0.6, 0))
+        for sy in (-1, 1):                                                              # 胸びれ
+            bm_sphere(bm, 1.0, c=(0.38, sy * 0.42, 0.55), scl=(0.3, 0.06, 0.18), rot=(sy * 0.4, -0.3, 0))
+        for sy in (-1, 1):                                                              # 目
+            bm_sphere(bm, 0.07, c=(0.98, sy * 0.24, 0.56), u=8, v=6)
     make_asset("shachi", [
-        (lambda bm: bm_box(bm, 0.6, 0.5, 0.25), "Kinpaku"),
-        (lambda bm: bm_sphere(bm, 1.0, c=(0.0, 0, 1.05), scl=(0.38, 0.30, 0.95), rot=(0, -0.35, 0), u=16, v=10), "Kinpaku", True),
-        (lambda bm: bm_sphere(bm, 0.42, c=(0.32, 0, 0.45), scl=(1.25, 0.85, 0.75), u=14, v=8), "Kinpaku", True),
-        (lambda bm: bm_sphere(bm, 1.0, c=(-0.25, 0, 2.15), scl=(0.12, 0.55, 0.38), u=12, v=8), "Kinpaku", True),
-        (lambda bm: bm_sphere(bm, 1.0, c=(0.05, 0.3, 1.0), scl=(0.3, 0.05, 0.2)), "Kinpaku", True),
-        (lambda bm: bm_sphere(bm, 1.0, c=(0.05, -0.3, 1.0), scl=(0.3, 0.05, 0.2)), "Kinpaku", True),
+        (lambda bm: bm_box(bm, 0.7, 0.55, 0.3), "Kinpaku"),
+        (shachi_body, "KinpakuMirror", True),
+        (shachi_fins, "KinpakuMirror", True),
     ])
 
     # アセット置き場はビューレイヤーから除外（インスタンスだけが描画される）
@@ -1285,6 +1580,14 @@ def build_terrain():
     # 水面：掘り終わった堀に水が満ちていく
     water = new_obj("Water", mesh("water", lambda bm: bm_box(bm, ow - 1, od - 1, 0.05, c=(0, 0, L["WATER_Z"] - 0.05)), ["Water"]), c)
     sched(water, 235, 65, "rise", dz=4.2)
+    # EEVEE 用：堀の水面に城を鏡のように映す平面プローブ（Cycles では不要だが害はない）
+    if CFG["PLANAR_PROBE"]:
+        try:
+            lp = bpy.data.lightprobes.new(PREFIX + "MoatReflection", 'PLANE')
+            pr = new_obj("MoatReflectionProbe", lp, c, (0, 0, L["WATER_Z"] + 0.01), scl=(ow / 2, od / 2, 1.0))
+            lp.influence_distance = 0.6
+        except Exception as ex:
+            log("平面プローブを作れませんでした:", ex)
     # 道（南の街道と西の城下へ向かう道）
     for name, sx, sy, cx_, cy_ in (("RoadS", 10, 1400, 0, -125 - 700), ("RoadW", 900, 9, -450, -200)):
         new_obj(name, mesh(name, lambda bm, sx=sx, sy=sy, cx_=cx_, cy_=cy_: bm_box(bm, sx, sy, 0.06, c=(cx_, cy_, 0)), ["Road"]), c)
@@ -1424,6 +1727,44 @@ def ishigaki_rings(w_top, d_top, z_bot, z_top, batter, cx=0.0, cy=0.0, n=6, conc
     return rings
 
 
+def add_stone_relief(ob):
+    """高品質版：石垣を細分化し、マテリアルの変位で石を実際に凹凸させる。"""
+    if CFG["DISPLACE"] > 0:
+        md = ob.modifiers.new("StoneRelief", 'SUBSURF')
+        md.subdivision_type = 'SIMPLE'
+        md.levels = 1
+        md.render_levels = int(CFG["DISPLACE"])
+
+
+def corner_stones(name, col, rings, start, dur):
+    """隅石：石垣の四隅に、長い石を交互の向きに積む（算木積み風）。石垣の積み上がりに合わせて現れる。"""
+    me = [mesh("corner_stone%d" % v, lambda bm, v=v: bm_rough_stone(bm, 1.0, 300 + v), ["IshigakiBlock"]) for v in range(4)]
+    zb, zt = rings[0][2], rings[-1][2]
+    r = random.Random(sum(map(ord, name)) + CFG["SEED"])
+    k = 0
+    for ci, (sx, sy) in enumerate(((-1, -1), (1, -1), (1, 1), (-1, 1))):
+        z = zb + 0.5
+        layer = 0
+        while z < zt - 0.3:
+            t = (z - zb) / (zt - zb)
+            j = min(len(rings) - 2, int(t * (len(rings) - 1)))
+            u = t * (len(rings) - 1) - j
+            w = lerp(rings[j][0], rings[j + 1][0], u)
+            d = lerp(rings[j][1], rings[j + 1][1], u)
+            cx, cy = (rings[0][3], rings[0][4]) if len(rings[0]) > 3 else (0.0, 0.0)
+            px, py = cx + sx * w / 2, cy + sy * d / 2
+            L_ = r.uniform(1.9, 2.5)
+            if layer % 2 == 0:      # 長辺を東西の面に沿わせる
+                pos, rot = (px - sx * (L_ / 2 - 0.35), py + sy * 0.12, z), 0.0
+            else:                   # 長辺を南北の面に沿わせる
+                pos, rot = (px + sx * 0.12, py - sy * (L_ / 2 - 0.35), z), math.pi / 2
+            ob = new_obj("%s_corner%03d" % (name, k), me[k % 4], col, pos, (0, 0, rot), (L_ / 1.2, 1.05, 1.25))
+            sched(ob, start + dur * t, 5, "pop")
+            z += 0.95
+            layer += 1
+            k += 1
+
+
 def build_ishigaki():
     c = COL["ishigaki"]
     hw, hd, hz, mz, B = L["HON_W"], L["HON_D"], L["HON_Z"], L["MOAT_Z"], L["BATTER"]
@@ -1434,39 +1775,57 @@ def build_ishigaki():
     # 本丸の石垣（堀底から本丸上面まで）
     rings = ishigaki_rings(hw, hd, mz - 0.3, hz, B)
     for k, (start, dur) in enumerate(((160, 110), (172, 108), (184, 106), (196, 102))):
-        ob = new_obj("Ishigaki_Hon_" + sides[k], mesh("ish_hon%d" % k, lambda bm, k=k: bm_loft(bm, rings, sides=(k,)), ["Ishigaki"]), c)
+        ob = new_obj("Ishigaki_Hon_" + sides[k], mesh("ish_hon%d" % k, lambda bm, k=k: bm_loft_dense(bm, rings, sides=(k,)), ["Ishigaki"]), c)
         sched(ob, start, dur, "reveal")
+        add_stone_relief(ob)
+    corner_stones("Hon", c, rings, 160, 110)
     # 堀の外側の石垣（内向き）
     orings = [(ow - 3.6, od - 3.6, mz - 0.3), (ow - 1.2, od - 1.2, -2.0), (ow, od, 0.05)]
     for k, (start, dur) in enumerate(((175, 70), (190, 65), (205, 65), (220, 65))):
-        ob = new_obj("Ishigaki_Moat_" + sides[k], mesh("ish_moat%d" % k, lambda bm, k=k: bm_loft(bm, orings, sides=(k,), flip=True), ["Ishigaki"]), c)
+        ob = new_obj("Ishigaki_Moat_" + sides[k], mesh("ish_moat%d" % k, lambda bm, k=k: bm_loft_dense(bm, orings, sides=(k,), flip=True), ["Ishigaki"]), c)
         sched(ob, start, dur, "reveal")
+        add_stone_relief(ob)
     # 詰ノ丸の石垣
     trings = ishigaki_rings(L["TSUME_W"], L["TSUME_D"], hz - 0.3, L["TSUME_Z"], 2.2, tx, ty, n=4)
     for k in range(4):
-        ob = new_obj("Ishigaki_Tsume_" + sides[k], mesh("ish_tsume%d" % k, lambda bm, k=k: bm_loft(bm, trings, sides=(k,)), ["Ishigaki"]), c)
+        ob = new_obj("Ishigaki_Tsume_" + sides[k], mesh("ish_tsume%d" % k, lambda bm, k=k: bm_loft_dense(bm, trings, sides=(k,)), ["Ishigaki"]), c)
         sched(ob, 250 + k * 8, 55, "reveal")
+        add_stone_relief(ob)
+    corner_stones("Tsume", c, trings, 250, 70)
     # 天守台（午後の最初に積む）
     drings = ishigaki_rings(L["TENSHUDAI_W"], L["TENSHUDAI_D"], L["TSUME_Z"] - 0.2, L["TENSHUDAI_Z"], 2.8, kx, ky)
-    ob = new_obj("Tenshudai", mesh("tenshudai", lambda bm: bm_loft(bm, drings, cap_top=True), ["Ishigaki"]), c)
+
+    def tenshudai(bm):
+        bm_loft_dense(bm, drings)
+        top = drings[-1]
+        vs = [bm.verts.new((top[3] + sx * top[0] / 2, top[4] + sy * top[1] / 2, top[2]))
+              for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+        bm.faces.new(vs)
+    ob = new_obj("Tenshudai", mesh("tenshudai", tenshudai, ["Ishigaki"]), c)
     sched(ob, 500, 36, "reveal")
+    add_stone_relief(ob)
+    corner_stones("Tenshudai", c, drings, 500, 36)
 
 
 # =============================================================================
 # 7. 本丸（塀・櫓・門・橋・御殿・旗）
 # =============================================================================
 def jroof_set(name, col, cx, cy, z, w0, d0, w1, d1, h, start, roof_mat="Kawara", lift=0.6,
-              gold=True, onigawara=True, glint=None, solid=0.35):
-    """屋根＋金の軒先＋金の鬼瓦をまとめて作る。"""
+              gold=True, onigawara=True, glint=None, solid=0.35, curve=1.8):
+    """屋根＋隅棟＋金の軒先（軒丸瓦）＋金の鬼瓦をまとめて作る。"""
     objs = []
-    me = mesh("%s_roof" % name, lambda bm: bm_jroof(bm, w0, d0, w1, d1, h, lift=lift), [roof_mat])
+    me = mesh("%s_roof" % name, lambda bm: bm_jroof(bm, w0, d0, w1, d1, h, lift=lift, curve=curve), [roof_mat])
     r = new_obj(name + "_roof", me, col, (cx, cy, z))
     add_solidify(r, solid)
     sched(r, start, 8, "drop", dz=5.0)
-    objs.append(r)
+    rad = clamp(0.08 + 0.01 * w0, 0.12, 0.3)
+    hp = new_obj(name + "_hips", mesh("%s_hips" % name, lambda bm: bm_hips(bm, w0, d0, w1, d1, h, lift, curve=curve, rad=rad),
+                                      ["Kawara"]), col, (cx, cy, z))
+    sched(hp, start, 8, "drop", dz=5.0)
+    objs += [r, hp]
     if gold:
         me = mesh("%s_eave" % name, lambda bm: bm_jroof(bm, w0 + 0.12, d0 + 0.12, w1, d1, h, lift=lift, t_end=0.1,
-                                                         zoff=0.1, cap=False), ["Kinpaku"])
+                                                         zoff=0.1, cap=False, curve=curve), ["KinpakuTile"])
         g = new_obj(name + "_eave", me, col, (cx, cy, z))
         sched(g, start + 9, 4, "pop", glint=glint if glint else start + 11)
         objs.append(g)
@@ -1614,12 +1973,14 @@ def build_honmaru():
            (x0 + 4, y0 + 4, tz, 9, 8), (x1 - 4, y0 + 4, tz, 9, 8), (x0 + 4, y1 - 4, tz, 9, 8)]
     for k, (x, y, z, w, d) in enumerate(yag):
         make_yagura("Yagura%d" % k, c, x, y, z, w, d, 360 + k * 12)
+        DUST.append((360 + k * 12 + 2, Vector((x, y - d / 2 - 1.5, z + 0.3)), 1.0))
 
     # --- 本丸御殿（檜皮葺風の屋根に金の棟飾り） ---------------------------------
     for k, (x, y, z, w, d, start) in enumerate(((-48, -42, hz, 50, 28, 420), (-55, 22, hz, 34, 26, 440), (2, 22, tz, 28, 20, 460))):
         b = new_obj("Goten%d" % k, mesh("goten_b%d" % k, lambda bm, w=w, d=d: bm_box(bm, w, d, 5.5), ["Shikkui"]), c, (x, y, z))
         b["band_z"] = 1.6
         sched(b, start, 12, "reveal")
+        DUST.append((start + 2, Vector((x, y - d / 2 - 2, z + 0.3)), 1.4))
         jroof_set("Goten%d" % k, c, x, y, z + 5.5, w + 5, d + 5, w * 0.6, 1.0, 7.0, start + 12, roof_mat="Hiwada", lift=0.9)
 
     # --- 幟（のぼり）と秀吉の千成瓢箪の馬印 -------------------------------------
@@ -1738,6 +2099,35 @@ def hafu_mesh(gw, gh, depth):
     return multi_mesh("hafu_%.1f_%.1f" % (gw, gh), [(slopes, "Kawara"), (gable_wall, "KuroUrushi"), (boards, "Kinpaku")])
 
 
+def karahafu_mesh(w, h, depth):
+    """唐破風：中央が丸く盛り上がり、両端が反り返る曲線の破風。金の破風板と中央の飾り付き。正面 -Y。"""
+    n = 24
+    prof = []
+    for i in range(n + 1):
+        u = -1 + 2 * i / n
+        zz = h * (0.5 + 0.5 * math.cos(math.pi * u)) ** 0.9
+        zz += h * 0.22 * max(0.0, abs(u) - 0.72) / 0.28          # 両端の跳ね上がり
+        prof.append((u * w / 2, zz))
+
+    def roof(bm):
+        front = [bm.verts.new((x, 0.0, zz)) for x, zz in prof]
+        back = [bm.verts.new((x * 0.85, depth, zz + 0.4)) for x, zz in prof]
+        for i in range(n):
+            bm.faces.new((front[i], front[i + 1], back[i + 1], back[i]))
+
+    def wall(bm):
+        c_ = bm.verts.new((0, 0.35, 0.0))
+        vs = [bm.verts.new((x * 0.92, 0.35, max(0.0, zz - 0.25))) for x, zz in prof]
+        for i in range(n):
+            bm.faces.new((c_, vs[i + 1], vs[i]))
+
+    def board(bm):
+        for i in range(n):
+            bm_beam(bm, (prof[i][0], -0.06, prof[i][1]), (prof[i + 1][0], -0.06, prof[i + 1][1]), 0.32)
+        bm_box(bm, 0.8, 0.15, 0.7, c=(0, -0.12, h - 0.95))       # 中央の飾り（兎の毛通し）
+    return multi_mesh("karahafu_%.1f_%.1f" % (w, h), [(roof, "Kawara"), (wall, "KuroUrushi"), (board, "Kinpaku")])
+
+
 def build_tenshu():
     c = COL["tenshu"]
     kx, ky = L["TENSHU_C"]
@@ -1791,12 +2181,22 @@ def build_tenshu():
                 k += 1
         if top:
             # 最上重：金の障壁画パネルと金の高欄（廻縁）
+            # 金地の障壁画（虎・鶴などを描いた金の壁をイメージ）。黒い柱で区切る
             panels = new_obj(p + "_panels", mesh(p + "_panels", lambda bm, w=w, d=d, h=h: [
-                bm_box(bm, w * 0.8, 0.1, h * 0.36, c=(0, -d / 2 - 0.06, h * 0.12)),
-                bm_box(bm, w * 0.8, 0.1, h * 0.36, c=(0, d / 2 + 0.06, h * 0.12)),
-                bm_box(bm, 0.1, d * 0.8, h * 0.36, c=(w / 2 + 0.06, 0, h * 0.12)),
-                bm_box(bm, 0.1, d * 0.8, h * 0.36, c=(-w / 2 - 0.06, 0, h * 0.12))], ["Kinpaku"]), c, (kx, ky, z))
+                bm_box(bm, w * 0.92, 0.1, h * 0.62, c=(0, -d / 2 - 0.06, h * 0.12)),
+                bm_box(bm, w * 0.92, 0.1, h * 0.62, c=(0, d / 2 + 0.06, h * 0.12)),
+                bm_box(bm, 0.1, d * 0.92, h * 0.62, c=(w / 2 + 0.06, 0, h * 0.12)),
+                bm_box(bm, 0.1, d * 0.92, h * 0.62, c=(-w / 2 - 0.06, 0, h * 0.12))], ["KinpakuPaint"]), c, (kx, ky, z))
             sched(panels, f + 20, 6, "pop", glint=f + 24)
+
+            def frames(bm, w=w, d=d, h=h):
+                for u in (-0.46, -0.15, 0.15, 0.46):
+                    for sy in (-1, 1):
+                        bm_box(bm, 0.28, 0.14, h * 0.66, c=(u * w, sy * (d / 2 + 0.1), h * 0.1))
+                    for sx in (-1, 1):
+                        bm_box(bm, 0.14, 0.28, h * 0.66, c=(sx * (w / 2 + 0.1), u * d, h * 0.1))
+            fr = new_obj(p + "_frames", mesh(p + "_frames", frames, ["KuroUrushi"]), c, (kx, ky, z))
+            sched(fr, f + 22, 5, "pop")
 
             def koran(bm, w=w, d=d):
                 W, D = w + 2.6, d + 2.6
@@ -1818,14 +2218,18 @@ def build_tenshu():
         else:
             w1, d1 = w * 0.5, 0.5
         W0, D0 = w + 2 * o, d + 2 * o
-        lift = 0.8 if not top else 1.0
-        noji = new_obj(p + "_noji", mesh(p + "_noji", lambda bm, W0=W0, D0=D0, w1=w1, d1=d1, rh=rh, lift=lift: bm_jroof(bm, W0, D0, w1, d1, rh, lift=lift), ["Noji"]), c, (kx, ky, rz))
+        lift = ROOF_LIFT if not top else TOP_LIFT
+        cv = ROOF_CURVE
+        noji = new_obj(p + "_noji", mesh(p + "_noji", lambda bm, W0=W0, D0=D0, w1=w1, d1=d1, rh=rh, lift=lift: bm_jroof(bm, W0, D0, w1, d1, rh, lift=lift, curve=cv), ["Noji"]), c, (kx, ky, rz))
         add_solidify(noji, 0.4)
         sched(noji, f + 22, 6, "drop", dz=5.0)
-        kawara = new_obj(p + "_kawara", mesh(p + "_kawara", lambda bm, W0=W0, D0=D0, w1=w1, d1=d1, rh=rh, lift=lift: bm_jroof(bm, W0 + 0.1, D0 + 0.1, w1, d1, rh, lift=lift, zoff=0.1), ["Kawara"]), c, (kx, ky, rz))
+        kawara = new_obj(p + "_kawara", mesh(p + "_kawara", lambda bm, W0=W0, D0=D0, w1=w1, d1=d1, rh=rh, lift=lift: bm_jroof(bm, W0 + 0.1, D0 + 0.1, w1, d1, rh, lift=lift, zoff=0.1, curve=cv), ["Kawara"]), c, (kx, ky, rz))
         add_solidify(kawara, 0.12)
         sched(kawara, f + 27, 9, "reveal")
-        eave = new_obj(p + "_eave", mesh(p + "_eave", lambda bm, W0=W0, D0=D0, w1=w1, d1=d1, rh=rh, lift=lift: bm_jroof(bm, W0 + 0.22, D0 + 0.22, w1, d1, rh, lift=lift, t_end=0.1, zoff=0.2, cap=False), ["Kinpaku"]), c, (kx, ky, rz))
+        hips = new_obj(p + "_hips", mesh(p + "_hips", lambda bm, W0=W0, D0=D0, w1=w1, d1=d1, rh=rh, lift=lift: bm_hips(bm, W0 + 0.1, D0 + 0.1, w1, d1, rh, lift, curve=cv, zoff=0.12, rad=0.3), ["Kawara"]), c, (kx, ky, rz))
+        sched(hips, f + 27, 9, "reveal")
+        # 金箔瓦：軒先に並ぶ軒丸瓦
+        eave = new_obj(p + "_eave", mesh(p + "_eave", lambda bm, W0=W0, D0=D0, w1=w1, d1=d1, rh=rh, lift=lift: bm_jroof(bm, W0 + 0.22, D0 + 0.22, w1, d1, rh, lift=lift, t_end=0.1, zoff=0.2, cap=False, curve=cv), ["KinpakuTile"]), c, (kx, ky, rz))
         sched(eave, f + 35, 4, "pop", glint=f + 37)
 
         def oni(bm, W0=W0, D0=D0, lift=lift):
@@ -1835,8 +2239,19 @@ def build_tenshu():
         on = new_obj(p + "_oni", mesh(p + "_oni", oni, ["Kinpaku"]), c, (kx, ky, rz))
         sched(on, f + 35, 4, "pop", glint=f + 37)
         GLINTS.append((f + 37, Vector((kx + W0 / 2 * 1.04, ky - D0 / 2 * 1.04, rz + lift + 0.4)), 1.6 + i * 0.25))
+        # 唐破風（指定した重・面）
+        if i in KARA_HAFU:
+            side = KARA_HAFU[i]
+            sl = w if side in "SN" else d
+            R = (d / 2 if side in "SN" else w / 2) + o * 0.62
+            pos, rot = {"S": ((kx, ky - R), 0.0), "N": ((kx, ky + R), math.pi),
+                        "E": ((kx + R, ky), math.pi / 2), "W": ((kx - R, ky), -math.pi / 2)}[side]
+            kh = new_obj("%s_karahafu" % p, karahafu_mesh(sl * 0.34, rh * 0.9 + 0.5, 4.0), c, (*pos, rz + 0.05), (0, 0, rot))
+            sched(kh, f + 31, 6, "pop", glint=f + 34)
         # 千鳥破風
         for side in hafu:
+            if KARA_HAFU.get(i) == side:
+                continue
             sl = w if side in "SN" else d
             gw, gh = sl * 0.38, rh * 1.3 + 0.6
             R = (d / 2 if side in "SN" else w / 2) + o * 0.55
@@ -1850,18 +2265,42 @@ def build_tenshu():
     rl = w_top * 0.5
     ridge = new_obj("Tenshu_ridge", mesh("tenshu_ridge", lambda bm: bm_box(bm, rl + 1.0, 0.8, 0.9), ["Kawara"]), c, (kx, ky, z - 0.25))
     sched(ridge, 722, 4, "pop")
+    rg = new_obj("Tenshu_ridge_gold", mesh("tenshu_ridge_gold", lambda bm: [bm_box(bm, rl + 1.1, 0.9, 0.12, c=(0, 0, 0.62)),
+                                                                          bm_box(bm, rl + 1.1, 0.06, 0.25, c=(0, -0.43, 0.2)),
+                                                                          bm_box(bm, rl + 1.1, 0.06, 0.25, c=(0, 0.43, 0.2))], ["Kinpaku"]), c, (kx, ky, z - 0.25))
+    sched(rg, 725, 4, "pop", glint=727)
     for sx in (-1, 1):
-        sh = instance("Shachi%+d" % sx, ASSET["shachi"], c, (kx + sx * (rl / 2 + 0.2), ky, z + 0.5), 0.0 if sx < 0 else math.pi)
+        sh = instance("Shachi%+d" % sx, ASSET["shachi"], c, (kx + sx * (rl / 2 + 0.2), ky, z + 0.5), 0.0 if sx < 0 else math.pi, 1.15)
         sched(sh, 728, 8, "pop")
     CAM["shachi"] = Vector((kx, ky, z + 2.0))
-    for f_, dx, s_ in ((738, -1, 2.6), (742, 1, 2.6), (790, -1, 3.0), (812, 0, 2.2), (836, 1, 3.0), (878, -1, 2.4)):
-        GLINTS.append((f_, Vector((kx + dx * (rl / 2 + 0.2), ky, z + 2.2)), s_))
+    for f_, dx, s_ in ((738, -1, 2.6), (742, 1, 2.6), (790, -1, 3.0), (812, 0, 2.2), (836, 1, 3.0), (878, -1, 2.4),
+                       (804, 1, 2.0), (826, -1, 2.4), (850, 1, 2.8), (864, 0, 2.0), (892, 1, 2.6)):
+        GLINTS.append((f_, Vector((kx + dx * (rl / 2 + 0.2), ky, z + 2.6)), s_))
+    for f_, lv in ((818, 2), (842, 3), (870, 1), (884, 4)):     # 夕景：各重の軒の隅でもきらめく
+        w_, d_, h_, rh_, o_, _hf = TENSHU_LEVELS[lv]
+        zl = L["TENSHUDAI_Z"] + sum(t[2] + t[3] for t in TENSHU_LEVELS[:lv]) + h_
+        GLINTS.append((f_, Vector((kx - (w_ / 2 + o_) * 1.04, ky - (d_ / 2 + o_) * 1.04, zl + ROOF_LIFT + 0.4)), 1.8))
     CAM["tenshu_top"] = z
 
 
 # =============================================================================
 # 9. 普請場（足場・丸太・石材・クレーン）
 # =============================================================================
+def use_point(pos, z):
+    """資材が使われる場所：地面の山 → 堀端、本丸の山 → 本丸の縁、詰ノ丸の山 → 天守台のふもと。"""
+    if z < 1:
+        hx, hy, zz = L["MOAT_W"] / 2 - 1.5, L["MOAT_D"] / 2 - 1.5, 0.4
+    elif z < L["TSUME_Z"] - 1:
+        hx, hy, zz = L["HON_W"] / 2 - 3, L["HON_D"] / 2 - 3, L["HON_Z"] + 0.4
+    else:
+        kx, ky = L["TENSHU_C"]
+        return Vector((clamp(pos.x, kx - 17, kx + 17), clamp(pos.y, ky - 15, ky + 15), L["TSUME_Z"] + 0.4))
+    # 長方形の辺のうち、いちばん近いところ
+    cand = [Vector((clamp(pos.x, -hx, hx), sy * hy, zz)) for sy in (-1, 1)] + \
+           [Vector((sx * hx, clamp(pos.y, -hy, hy), zz)) for sx in (-1, 1)]
+    return min(cand, key=lambda q: (q - pos).xy.length)
+
+
 def build_site():
     c = COL["site"]
     hz, tz = L["HON_Z"], L["TSUME_Z"]
@@ -1882,7 +2321,14 @@ def build_site():
                          (px + math.cos(ang) * rad, py + math.sin(ang) * rad, pz + layer * 0.9 + 0.3 * s),
                          (0, 0, r.uniform(0, 6.28)), (s, s, s))
             start = a0 if (a0 == 1 and r.random() < 0.4) else r.uniform(a0, a1)
-            sched(ob, start, 6, "pop", end=r.uniform(v0, v1), end_dur=5)
+            end = r.uniform(v0, v1)
+            if r.random() < 0.55:      # 半分ほどは、積む場所（堀端・本丸の縁・天守台）まで運ばれてから消える
+                sched(ob, start, 6, "pop", end=end, end_dur=4, end_mode="carry",
+                      end_target=list(use_point(Vector(ob.location), pz)), end_travel=r.uniform(16, 26))
+                if r.random() < 0.35:
+                    DUST.append((end - 4, use_point(Vector(ob.location), pz), 1.0))
+            else:
+                sched(ob, start, 6, "pop", end=end, end_dur=5)
     # 丸太の山：昼〜午後に建物へ使われて減っていく
     logm = mesh("log", lambda bm: bm_cyl(bm, 0.24, 0.22, 8.0, 10, c=(-4.0, 0, 0), axis='X'), ["Wood"])
     for pi, (px, py, pz, yaw) in enumerate(((14, -146, 0, 0.3), (-110, -158, 0, -0.2), (110, -160, 0, 0.1),
@@ -1893,7 +2339,11 @@ def build_site():
                 off = (j - (cnt - 1) / 2) * 0.5
                 lx, ly = -math.sin(yaw) * off, math.cos(yaw) * off
                 ob = new_obj("Log%d_%02d" % (pi, k), logm, c, (px + lx, py + ly, pz + 0.24 + layer * 0.43), (0, 0, yaw))
-                sched(ob, r.uniform(40, 200), 6, "pop", end=r.uniform(330, 720), end_dur=6)
+                end = r.uniform(330, 720)
+                tgt = Vector((r.uniform(-6, 6), -L["MOAT_D"] / 2 - 4, 0.4)) if pz == 0 else \
+                    Vector((r.uniform(-60, 60), r.uniform(-60, -25), hz + 0.4))     # 橋のたもと / 本丸の普請場へ
+                sched(ob, r.uniform(40, 200), 6, "pop", end=end, end_dur=5, end_mode="carry",
+                      end_target=list(tgt), end_travel=r.uniform(18, 28))
                 k += 1
     # 夜明けの仮設足場
     for k, (x, y, z, w, d, h) in enumerate(((-25, -137, 0, 8, 4, 5), (-70, -55, hz, 6, 6, 8), (70, -55, hz, 6, 6, 6))):
@@ -2022,6 +2472,8 @@ def build_workers():
                 e.location = p
                 e.keyframe_insert("location", frame=f)
                 key_hide(e, False, f)
+                key_prop(e, "b_itransp", 1.0, f)        # タイムラプスの人のように、ふっと現れる
+                key_prop(e, "b_itransp", 0.0, f + 4)
                 t = f
                 while t < end - 2:
                     q = zone_point(zone, r, near=p)
@@ -2042,10 +2494,15 @@ def build_workers():
                         e.keyframe_insert("rotation_euler", index=2, frame=t + 2)
                     e.location = p
                     e.keyframe_insert("location", frame=t)
+                    if dt >= 4 and dv.xy.length > 1.0:     # 歩くときの上下動
+                        e.location = (p + q) / 2 + Vector((0, 0, 0.07))
+                        e.keyframe_insert("location", frame=t + dt / 2)
                     e.location = q
                     e.keyframe_insert("location", frame=t + dt)
                     p = q
                     t += dt + r.choice((0, 0, 2, 4, 8))
+                key_prop(e, "b_itransp", 0.0, end - 4)     # ふっと消える
+                key_prop(e, "b_itransp", 1.0, end)
                 key_hide(e, True, end)
                 f = max(end, t) + 1 + r.randint(0, 14)
             else:
@@ -2097,6 +2554,129 @@ def build_town():
     for name, sx, sy, cx_, cy_ in [("Street%d" % k, 360, 7, -380, y) for k, y in enumerate((-215, -150, -85, -20, 45, 110))]:
         st = new_obj(name, mesh(name, lambda bm, sx=sx, sy=sy, cx_=cx_, cy_=cy_: bm_box(bm, sx, sy, 0.05, c=(cx_, cy_, 0)), ["Road"]), c)
         sched(st, 580, 30, "fade")
+
+
+def build_haul_teams():
+    """石曳き：修羅（木ぞり）に載せた巨石を、大勢で綱を引いて運ぶ。巨石の上では音頭取りが采配を振る。
+    タイムラプスなので、1往復を約2秒に縮め、着いたら石を置いて（消えて）また次の石を運んでくる。"""
+    c = COL["life"]
+    tz = L["TSUME_Z"]
+    teams = [((150, 300), [(20, -178, 0), (12, -154, 0), (8, -131, 0)]),              # 南の置き場 → 堀端（朝のカメラの正面）
+             ((160, 300), [(228, -72, 0), (184, -32, 0), (147, -6, 0)]),               # 東 → 堀端
+             ((466, 540), [(-14, -22, tz), (6, -4, tz), (24, 12, tz)])]                # 詰ノ丸 → 天守台
+    sled = mesh("haul_sled", lambda bm: [bm_box(bm, 0.35, 4.4, 0.35, c=(sx * 1.0, 0, 0)) for sx in (-1, 1)] +
+                [bm_box(bm, 2.6, 0.3, 0.25, c=(0, y, 0.3)) for y in (-1.6, 0.0, 1.6)], ["Wood"])
+    stone = mesh("haul_stone", lambda bm: bm_rough_stone(bm, 2.4, 77), ["IshigakiBlock"])
+    ropes = mesh("haul_ropes", lambda bm: [bm_beam(bm, (sx * 0.8, 2.2, 0.5), (sx * 1.15, 17.5, 1.0), 0.06) for sx in (-1, 1)], ["Rope"])
+    r = random.Random(CFG["SEED"] + 61)
+    for ti, ((a, b), path) in enumerate(teams[:int(CFG["HAUL_TEAMS"])]):
+        dv = Vector(path[-1]) - Vector(path[0])
+        root = new_empty("HaulTeam%d" % ti, c, path[0], 1.0)
+        root.rotation_euler.z = math.atan2(-dv.x, dv.y)
+        objs = [new_obj("HaulTeam%d_sled" % ti, sled, c), new_obj("HaulTeam%d_stone" % ti, stone, c, (0, 0, 1.45)),
+                new_obj("HaulTeam%d_ropes" % ti, ropes, c)]
+        pullers = []
+        for row in range(7):
+            for sx in (-1, 1):
+                w_ = instance("HaulTeam%d_w%02d" % (ti, len(pullers)), ASSET["worker_a" if (row + sx) % 2 else "worker_b"], c,
+                              (sx * 1.15 + r.uniform(-0.1, 0.1), 4.2 + row * 1.9, 0), 0.0, r.uniform(0.94, 1.05))
+                pullers.append(w_)
+        leader = instance("HaulTeam%d_leader" % ti, ASSET["worker_b"], c, (0, 0, 2.6), math.pi)
+        objs += pullers + [leader]
+        for o_ in objs:
+            parent_to(o_, root)
+        for o_ in objs + [root]:
+            key_hide(o_, True, CFG["FRAME_START"])
+        cyc = 62
+        f = a
+        while f + cyc <= b:
+            for df, pt in ((0, path[0]), (cyc * 0.5, path[1]), (cyc - 8, path[2]), (cyc - 1, path[2])):
+                root.location = pt
+                root.keyframe_insert("location", frame=f + df)
+            for o_ in objs + [root]:
+                key_hide(o_, False, f)
+                key_hide(o_, True, f + cyc)
+            DUST.append((f + cyc - 8, Vector(path[2]), 1.4))
+            f += cyc + 3
+        for k_, w_ in enumerate(pullers + [leader]):     # 綱を引く体の揺れ
+            ph = r.uniform(0, 6)
+            for fr in range(a, b, 6):
+                w_.rotation_euler.x = 0.16 * math.sin(fr * 0.5 + ph) - (0.12 if w_ is not leader else 0.0)
+                w_.keyframe_insert("rotation_euler", index=0, frame=fr)
+
+
+def build_dust():
+    """土埃：石を置いた所・建て始めた所に、柔らかい埃の玉が広がりながら消える。"""
+    n = int(CFG["DUST"])
+    if n <= 0:
+        return
+    c = COL["fx"]
+    r = random.Random(CFG["SEED"] + 71)
+    ev = list(DUST)
+    hw, hd, B, mz = L["HON_W"], L["HON_D"], L["BATTER"], L["MOAT_Z"]
+    for k in range(18):          # 朝：石垣のふもと（堀の底）
+        f = r.uniform(165, 290)
+        sx, sy = r.choice((-1, 1)), r.choice((-1, 1))
+        pos = Vector((r.uniform(-hw / 2, hw / 2), sy * (hd / 2 + B + 1), mz + 0.8)) if r.random() < 0.5 else \
+            Vector((sx * (hw / 2 + B + 1), r.uniform(-hd / 2, hd / 2), mz + 0.8))
+        ev.append((f, pos, 1.6))
+    kx, ky = L["TENSHU_C"]
+    for k in range(8):           # 午後：天守台のふもと
+        ev.append((r.uniform(502, 534), Vector((kx + r.uniform(-17, 17), ky - 15, L["TSUME_Z"] + 0.5)), 1.3))
+    r.shuffle(ev)
+    ev = sorted(ev[:n], key=lambda e: e[0])
+    me = mesh("dust_puff", lambda bm: bm_ico(bm, 1.0, sub=2), ["Dust"], smooth=True)
+    for k, (f, pos, size) in enumerate(ev):
+        for j in range(2):
+            ob = new_obj("Dust%03d_%d" % (k, j), me, c, pos + Vector((r.uniform(-2, 2), r.uniform(-2, 2), 0)))
+            no_shadow(ob)
+            f0 = f + j * 3
+            key_hide(ob, True, CFG["FRAME_START"])
+            key_hide(ob, False, f0)
+            for df, sc_, dz, tr in ((0, 0.6, 0.0, 0.0), (12, 2.0, 1.6, 0.35), (26, 3.0, 3.2, 1.0)):
+                ob.scale = Vector((1.3, 1.3, 0.8)) * sc_ * size
+                ob.location.z = pos.z + dz
+                ob.keyframe_insert("scale", frame=f0 + df)
+                ob.keyframe_insert("location", index=2, frame=f0 + df)
+                key_prop(ob, "b_transp", tr, f0 + df)
+            key_hide(ob, True, f0 + 27)
+
+
+def build_birds():
+    """鳥（烏）の群れ：夜明けと夕方に空を横切り、時間と空気の広がりを感じさせる。"""
+    n = int(CFG["BIRDS"])
+    if n <= 0:
+        return
+    c = COL["fx"]
+
+    def fn(bm):
+        body_f, body_b = bm.verts.new((0, 0.28, 0)), bm.verts.new((0, -0.22, 0))
+        for sx in (-1, 1):
+            tip = bm.verts.new((sx * 0.85, -0.12, 0.2))
+            bm.faces.new((body_f, tip, body_b) if sx > 0 else (body_f, body_b, tip))
+    me = mesh("bird", fn, ["Bird"])
+    r = random.Random(CFG["SEED"] + 81)
+    flocks = [(30, 175, Vector((-240, -60, 30)), Vector((230, 10, 48)), 0.4),       # 夜明け
+              (765, 900, Vector((-320, 140, 40)), Vector((180, -170, 70)), 0.6)]    # 夕方
+    k = 0
+    for a, b, p0, p1, share in flocks:
+        for i in range(max(1, int(n * share))):
+            off = Vector((r.uniform(-14, 14), r.uniform(-14, 14), r.uniform(-5, 5)))
+            ob = new_obj("Bird%02d" % k, me, c, p0 + off, (0, 0, 0), (1.3, 1.3, 1.3))
+            k += 1
+            d = p1 - p0
+            ob.rotation_euler.z = math.atan2(-d.x, d.y)
+            sh, ph = r.uniform(-8, 8), r.uniform(0, 6.28)
+            key_hide(ob, True, CFG["FRAME_START"])
+            key_hide(ob, False, a)
+            for fr in range(a, b + 1, 8):
+                u = clamp((fr - a + sh) / (b - a), 0.0, 1.0)
+                ob.location = p0.lerp(p1, u) + off + Vector((0, 0, 3.0 * math.sin(u * 9 + ph)))
+                ob.keyframe_insert("location", frame=fr)
+            for j, fr in enumerate(range(a, b + 1, 3)):     # 羽ばたき（翼を上下に裏返す）
+                ob.scale.z = 1.3 if (j + int(ph)) % 2 else -0.9
+                ob.keyframe_insert("scale", index=2, frame=fr)
+            key_hide(ob, True, b + 1)
 
 
 # =============================================================================
@@ -2223,19 +2803,14 @@ def find_font():
     return None
 
 
-def build_titles():
-    """テロップ：カメラの子にした板に文字を置き、焦点距離に応じて大きさを補正する。"""
-    if not CFG["USE_TITLES"]:
-        return
-    font = find_font()
-    if font is None:
-        log("日本語フォントが見つからないためテロップを省略しました（CFG['FONT_PATH'] で指定可）")
-        return
+def build_overlay():
+    """カメラの前（1m）に置く板の土台。テロップ・黒帯・周辺減光をここに載せる。
+    焦点距離が変わっても画面に対する大きさが一定になるよう、ドライバーで拡大率を補正する。"""
     c = COL["fx"]
     cam, cd = CAM["cam"], CAM["data"]
     rig = new_empty("TitleRig", c, (0, 0, -1.0), 0.05)
     parent_to(rig, cam)
-    for i in range(3):   # 焦点距離が変わっても文字の大きさを一定に（単純な式なので自動実行不要）
+    for i in range(3):   # 単純な式なので、Python の自動実行を許可しなくても動く
         fc = rig.driver_add("scale", i)
         drv = fc.driver
         drv.type = 'SCRIPTED'
@@ -2249,6 +2824,45 @@ def build_titles():
     portrait = CFG["ASPECT"] == "9:16"
     fw = 36.0 / 35.0 * (9 / 16 if portrait else 1.0)
     fh = fw * (16 / 9 if portrait else 9 / 16)
+    CAM["rig"], CAM["fw"], CAM["fh"], CAM["portrait"] = rig, fw, fh, portrait
+
+    def plane(name, w, h, mat):
+        def fn(bm):
+            vs = [bm.verts.new((sx * w / 2, sy * h / 2, 0)) for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+            bm.faces.new(vs)
+        return mesh(name, fn, [mat])
+    if CFG["VIGNETTE"] > 0:            # 周辺減光：文字の後ろ、景色の前
+        vg = new_obj("Vignette", plane("vignette", fw * 1.04, fh * 1.04, "Vignette"), c)
+        parent_to(vg, rig)
+        vg.location = (0, 0, -0.002)
+        no_shadow(vg)
+    CAM["bar"] = 0.0
+    if CFG["LETTERBOX"] != "OFF" and not portrait:     # シネマスコープ（2.39:1）の黒帯
+        bar = (fh - fw / 2.39) / 2
+        CAM["bar"] = bar
+        me = plane("letterbox", fw * 1.1, bar, "TitleShadow")
+        for sy in (-1, 1):
+            lb = new_obj("Letterbox%+d" % sy, me, c)
+            parent_to(lb, rig)
+            no_shadow(lb)
+            lb.location = (0, sy * (fh / 2 - bar / 2), -0.0015)
+            if CFG["LETTERBOX"] == "FINALE":   # 完成の瞬間に上下から黒帯が入る
+                lb.location.y = sy * (fh / 2 + bar / 2)
+                lb.keyframe_insert("location", index=1, frame=752)
+                lb.location.y = sy * (fh / 2 - bar / 2)
+                lb.keyframe_insert("location", index=1, frame=786)
+
+
+def build_titles():
+    """テロップ：カメラ前の板（build_overlay）に文字を置く。"""
+    if not CFG["USE_TITLES"]:
+        return
+    font = find_font()
+    if font is None:
+        log("日本語フォントが見つからないためテロップを省略しました（CFG['FONT_PATH'] で指定可）")
+        return
+    c = COL["fx"]
+    rig, fw, fh, portrait = CAM["rig"], CAM["fw"], CAM["fh"], CAM["portrait"]
     k = 1.7 if portrait else 1.0       # 縦型は画面の幅が狭いので文字を大きめに
 
     def text(name, body, size, x, y, f0, f1, mat="TitleWhite", align='CENTER'):
@@ -2281,8 +2895,78 @@ def build_titles():
     f0, f1, main, sub = TITLES["end"]
     if portrait:
         sub = sub.replace(" ／ ", "\n")   # 縦型では2行に分ける
-    text("End_main", main, fw * 0.07 * k, 0, fh * 0.33, f0, f1 + 10, "TitleGold")     # 城と重ならない上部
-    text("End_sub", sub, fw * 0.02 * k, 0, fh * (0.25 if portrait else 0.235), f0 + 8, f1 + 10)
+        y_main, y_sub = fh * 0.33, fh * 0.25
+    else:                                   # 城と重ならない上部（黒帯がある場合はその下）
+        y_main, y_sub = (fh * 0.28, fh * 0.17) if CAM.get("bar") else (fh * 0.33, fh * 0.235)
+    text("End_main", main, fw * 0.07 * k, 0, y_main, f0, f1 + 10, "TitleGold")
+    text("End_sub", sub, fw * 0.02 * k, 0, y_sub, f0 + 8, f1 + 10)
+
+
+def build_fires():
+    """篝火：夕方、大手門から順に火が入り、門と石垣を暖色に照らす（高品質版は点光源も入れる）。"""
+    n = int(CFG["FIRES"])
+    if n <= 0:
+        return
+    c = COL["fx"]
+    hz, tz = L["HON_Z"], L["TSUME_Z"]
+    spots = [(-9, -66.5, hz), (9, -66.5, hz), (-6, -131.5, 0), (6, -131.5, 0),       # 大手門の内外
+             (-84, -40, hz), (-84, -10, hz), (-84, 25, hz), (-84, 52, hz),            # 西の縁（完成カットの手前）
+             (-40, -69, hz), (40, -69, hz), (-70, -69, hz), (70, -69, hz),            # 南の縁
+             (-5, -21, tz), (35, -21, tz), (-21, 10, tz), (-21, 35, tz),              # 詰ノ丸
+             (-30, -131.5, 0), (30, -131.5, 0)]
+    tripod = mesh("fire_tripod", lambda bm: [bm_beam(bm, (math.cos(a) * 0.7, math.sin(a) * 0.7, 0), (0, 0, 2.6), 0.05, True)
+                                            for a in (0.0, 2.1, 4.2)] + [bm_cyl(bm, 0.38, 0.5, 0.4, 10, c=(0, 0, 2.5))], ["WoodDark"])
+    flame = mesh("fire_flame", lambda bm: bm_ico(bm, 0.45, c=(0, 0, 3.25), scl=(1.0, 1.0, 1.7), sub=2), ["Flame"], smooth=True)
+    r = random.Random(CFG["SEED"] + 91)
+    for k, pos in enumerate(spots[:n]):
+        root = new_empty("Fire%02d" % k, c, pos, 0.5)
+        sched(root, 470 + k, 6, "pop")
+        tp = new_obj("Fire%02d_stand" % k, tripod, c)
+        fl = new_obj("Fire%02d_flame" % k, flame, c)
+        for o_ in (tp, fl):
+            parent_to(o_, root)
+        no_shadow(fl)
+        lit = 792 + k * 3                       # 門から順に火が入る
+        key_hide(fl, True, CFG["FRAME_START"])
+        key_hide(fl, False, lit)
+        lo = None
+        if CFG["FIRE_LIGHTS"]:
+            ld = bpy.data.lights.new(PREFIX + "FireLight%02d" % k, 'POINT')
+            ld.color = (1.0, 0.55, 0.25)
+            ld.shadow_soft_size = 0.4
+            lo = new_obj("Fire%02d_light" % k, ld, c, (0, 0, 3.3))
+            parent_to(lo, root)
+            key_hide(lo, True, CFG["FRAME_START"])
+            key_hide(lo, False, lit)
+        for fr in range(lit, CFG["FRAME_END"] + 1, 2):     # 揺らぎ
+            v = r.uniform(0.7, 1.25) * min(1.0, (fr - lit + 1) / 6.0)
+            key_prop(fl, "b_flick", v, fr)
+            fl.scale = (1.0, 1.0, 0.75 + 0.4 * v)
+            fl.keyframe_insert("scale", index=2, frame=fr)
+            if lo is not None:
+                lo.data.energy = 650.0 * v
+                lo.data.keyframe_insert("energy", frame=fr)
+
+
+def build_kicker():
+    """完成カット用の補助光：夕日の側から天守の上半分に暖かい光を足し、金の反射を際立たせる。
+    映画の照明と同じ考え方の「演出の光」。強さは KICKER_KEYS で調整（0 にすれば無効）。"""
+    kx, ky = L["TENSHU_C"]
+    top = CAM.get("tenshu_top", 64.0)
+    tgt = new_empty("KickerTarget", COL["camlight"], (kx, ky, top - 12), 1.0)
+    ld = bpy.data.lights.new(PREFIX + "Kicker", 'SPOT')
+    ld.spot_size = math.radians(16)
+    ld.spot_blend = 0.6
+    ld.color = (1.0, 0.72, 0.42)
+    ld.shadow_soft_size = 3.0
+    ob = new_obj("Kicker", ld, COL["camlight"], (kx - 200, ky - 110, top + 30))
+    con = ob.constraints.new('TRACK_TO')
+    con.target = tgt
+    con.track_axis = 'TRACK_NEGATIVE_Z'
+    con.up_axis = 'UP_Y'
+    for f, e in KICKER_KEYS:
+        ld.energy = e
+        ld.keyframe_insert("energy", frame=f)
 
 
 # =============================================================================
@@ -2296,29 +2980,38 @@ def setup_render():
     rx, ry = (1080, 1920) if CFG["ASPECT"] == "9:16" else (1920, 1080)
     r.resolution_x, r.resolution_y = rx, ry
     final = CFG["QUALITY"] == "FINAL"
+    hq = CFG["PRESET"] == "HQ"
     r.resolution_percentage = 100 if final else 50
+
+    def setattrs(obj, pairs):
+        for attr, val in pairs:
+            if hasattr(obj, attr):
+                try:
+                    setattr(obj, attr, val)
+                except Exception:
+                    pass
     if CFG["ENGINE"] == "CYCLES":
         r.engine = 'CYCLES'
-        sc.cycles.samples = 128 if final else 24
-        sc.cycles.use_denoising = True
-        sc.cycles.max_bounces = 6
-        try:
-            sc.cycles.use_adaptive_sampling = True
-        except Exception:
-            pass
+        cy = sc.cycles
+        cy.samples = CFG["CYCLES_SAMPLES"] if final else max(16, CFG["CYCLES_SAMPLES"] // 4)
+        cy.use_denoising = True
+        setattrs(cy, (("use_adaptive_sampling", True), ("adaptive_threshold", 0.015 if hq else 0.03),
+                      ("max_bounces", 8 if hq else 4), ("glossy_bounces", 4 if hq else 2),
+                      ("transparent_max_bounces", 16), ("blur_glossy", 0.5),        # 金の反射のチラつき（ホタル）を抑える
+                      ("caustics_reflective", False), ("caustics_refractive", False),
+                      ("volume_step_rate", 1.0 if hq else 3.0), ("use_light_tree", True)))
     else:
         ids = [e.identifier for e in bpy.types.RenderSettings.bl_rna.properties["engine"].enum_items]
         r.engine = 'BLENDER_EEVEE_NEXT' if 'BLENDER_EEVEE_NEXT' in ids else 'BLENDER_EEVEE'
-        ee = sc.eevee
-        for attr, val in (("taa_render_samples", 64 if final else 16), ("use_raytracing", True),
-                          ("use_ssr", True), ("use_gtao", True), ("use_shadows", True),
-                          ("use_volumetric_shadows", True), ("volumetric_end", 1800.0),
-                          ("volumetric_tile_size", '8' if final else '16'), ("use_bloom", False)):
-            if hasattr(ee, attr):
-                try:
-                    setattr(ee, attr, val)
-                except Exception:
-                    pass
+        setattrs(sc.eevee, (
+            ("taa_render_samples", CFG["EEVEE_SAMPLES"] if final else max(8, CFG["EEVEE_SAMPLES"] // 4)),
+            ("use_raytracing", CFG["RAYTRACE"]), ("use_ssr", True), ("use_gtao", True), ("use_shadows", True),
+            ("use_volumetric_shadows", CFG["VOL_SHADOWS"]), ("volumetric_end", 1800.0),
+            ("volumetric_tile_size", CFG["VOL_TILE"]), ("use_bloom", False),
+            ("shadow_resolution_scale", 1.0 if hq else 0.5), ("shadow_ray_count", 2 if hq else 1)))
+        rto = getattr(sc.eevee, "ray_tracing_options", None)
+        if rto is not None:
+            setattrs(rto, (("resolution_scale", '1' if hq else '2'),))
     vs = sc.view_settings
     try:
         vs.view_transform = 'AgX'
@@ -2331,7 +3024,10 @@ def setup_render():
     except Exception:
         vs.view_transform = 'Filmic'
     vs.exposure = EXPOSURE_KEYS[0][1]
-    r.use_motion_blur = False
+    # モーションブラー（高品質版）：タイムラプスの人・雲・牛車が流れて見える
+    r.use_motion_blur = bool(CFG["MOTION_BLUR"])
+    if hasattr(r, "motion_blur_shutter"):
+        r.motion_blur_shutter = 0.5
     # Cycles の「永続データ」はオフ。表示/非表示の切り替えが続く長い連続レンダリングで、
     # オブジェクトごとのプロパティ（建設マスク）が食い違い、石垣が透ける現象を確認したため
     if hasattr(r, "use_persistent_data"):
@@ -2357,40 +3053,49 @@ def setup_compositor():
     if not CFG["USE_GLARE"]:
         return
     sc = bpy.context.scene
+
+    def set_glare(gl, kind, threshold, strength, size=0.55, streaks=4, angle=math.radians(45), fade=0.88):
+        if "Type" in gl.inputs:                               # 4.5〜5.x：設定がソケット
+            gl.inputs["Type"].default_value = {"BLOOM": "Bloom", "STREAKS": "Streaks"}[kind]
+        else:                                                 # 4.2：設定がプロパティ
+            try:
+                gl.glare_type = kind
+            except Exception:
+                gl.glare_type = 'FOG_GLOW'
+        for name, val in (("Threshold", threshold), ("Strength", strength), ("Size", size),
+                          ("Streaks", streaks), ("Streaks Angle", angle), ("Fade", fade)):
+            if name in gl.inputs:
+                gl.inputs[name].default_value = val
+        if "Threshold" not in gl.inputs:
+            gl.threshold = threshold
+            gl.mix = -1.0 + min(1.0, strength)
+            if kind == "BLOOM":
+                gl.size = 7
+            else:
+                gl.streaks, gl.angle_offset, gl.fade = streaks, angle, fade
     try:
         if hasattr(sc, "compositing_node_group"):          # 5.x
-            ng = bpy.data.node_groups.new(PREFIX + "Compositor", "CompositorNodeTree")
-            ng.interface.new_socket(name="Image", in_out='OUTPUT', socket_type='NodeSocketColor')
-            rl = ng.nodes.new("CompositorNodeRLayers")
-            gl = ng.nodes.new("CompositorNodeGlare")
-            out = ng.nodes.new("NodeGroupOutput")
-            ng.links.new(rl.outputs["Image"], gl.inputs["Image"])
-            ng.links.new(gl.outputs["Image"], out.inputs[0])
-            sc.compositing_node_group = ng
+            nt = bpy.data.node_groups.new(PREFIX + "Compositor", "CompositorNodeTree")
+            nt.interface.new_socket(name="Image", in_out='OUTPUT', socket_type='NodeSocketColor')
+            out_sock = nt.nodes.new("NodeGroupOutput").inputs[0]
+            sc.compositing_node_group = nt
         else:                                              # 4.x
             sc.use_nodes = True
             nt = sc.node_tree
             for n in list(nt.nodes):
                 nt.nodes.remove(n)
-            rl = nt.nodes.new("CompositorNodeRLayers")
-            gl = nt.nodes.new("CompositorNodeGlare")
-            comp = nt.nodes.new("CompositorNodeComposite")
-            nt.links.new(rl.outputs["Image"], gl.inputs["Image"])
-            nt.links.new(gl.outputs["Image"], comp.inputs["Image"])
-        if "Type" in gl.inputs:
-            gl.inputs["Type"].default_value = "Bloom"
-        else:
-            try:
-                gl.glare_type = 'BLOOM'
-            except Exception:
-                gl.glare_type = 'FOG_GLOW'
-        for name, val in (("Threshold", 1.4), ("Strength", 0.45), ("Size", 0.55)):
-            if name in gl.inputs:
-                gl.inputs[name].default_value = val
-        if hasattr(gl, "threshold") and "Threshold" not in gl.inputs:
-            gl.threshold = 1.4
-            gl.mix = -0.55
-            gl.size = 7
+            out_sock = nt.nodes.new("CompositorNodeComposite").inputs["Image"]
+        rl = nt.nodes.new("CompositorNodeRLayers")
+        bloom = nt.nodes.new("CompositorNodeGlare")       # 金のハイライトのにじみ
+        set_glare(bloom, "BLOOM", 1.4, 0.45)
+        nt.links.new(rl.outputs["Image"], bloom.inputs["Image"])
+        last = bloom.outputs["Image"]
+        if CFG["GLARE_STREAKS"]:                           # 高品質版：強い反射だけに星形の光芒
+            star = nt.nodes.new("CompositorNodeGlare")
+            set_glare(star, "STREAKS", 6.0, 0.35)
+            nt.links.new(last, star.inputs["Image"])
+            last = star.outputs["Image"]
+        nt.links.new(last, out_sock)
         sc.render.use_compositing = True
     except Exception as ex:
         log("コンポジターの設定をスキップ:", ex)
@@ -2398,9 +3103,19 @@ def setup_compositor():
 
 def key_material_values():
     """マテリアル内の時間変化（夕景の金の発光・水面のさざ波）。"""
-    nt = MAT["Kinpaku"].node_tree
-    for f, v in GOLD_GLOW_KEYS:
-        key_socket(nt.nodes["GoldGlow"].outputs[0], v, f)
+    for m in MAT.values():                    # 金箔 4種すべての夕景の発光
+        g = m.node_tree.nodes.get("GoldGlow") if m.node_tree else None
+        if g is not None:
+            for f, v in GOLD_GLOW_KEYS:
+                key_socket(g.outputs[0], v, f)
+    fn = MAT["Fog"].node_tree.nodes                # 霧の色・光芒・かすみ
+    for f, colr, aniso, haze in FOG_LOOK_KEYS:
+        key_socket(fn["FogColor"].outputs[0], (*colr, 1.0), f)
+        key_socket(fn["FogAniso"].outputs[0], aniso, f)
+        key_socket(fn["FogHaze"].outputs[0], haze, f)
+    wg = MAT["TownWindow"].node_tree.nodes["WindowGlow"]
+    for f, v in WINDOW_GLOW_KEYS:
+        key_socket(wg.outputs[0], v, f)
     hz = MAT["Mountain"].node_tree.nodes["Haze"]
     for f, _z, _hs, ha, strength in SKY_KEYS:
         key_socket(hz.outputs[0], (ha[0] * strength, ha[1] * strength, ha[2] * strength, 1.0), f)
@@ -2408,9 +3123,10 @@ def key_material_values():
     for f, v in EXPOSURE_KEYS:
         sc.view_settings.exposure = v
         sc.view_settings.keyframe_insert("exposure", frame=f)
-    wn = MAT["Water"].node_tree.nodes["WaterNoise"]
-    key_socket(wn.inputs["W"], 0.0, CFG["FRAME_START"])
-    key_socket(wn.inputs["W"], 14.0, CFG["FRAME_END"])
+    wnodes = MAT["Water"].node_tree.nodes
+    for name, w_end in (("WaterNoise", 10.0), ("WaterNoise2", 45.0)):
+        key_socket(wnodes[name].inputs["W"], 0.0, CFG["FRAME_START"])
+        key_socket(wnodes[name].inputs["W"], w_end, CFG["FRAME_END"])
     set_interp(MAT["Water"].node_tree, "LINEAR")
 
 
@@ -2447,10 +3163,16 @@ def main():
     build_tenshu()
     build_site()
     build_town()
+    build_fires()
     apply_all_builds()      # ここまでに sched() したものをキーフレームに変換
     build_workers()
     build_oxcarts()
+    build_haul_teams()
+    build_dust()            # 石垣・櫓・御殿・石曳きの予定が出そろってから
+    build_birds()
+    build_kicker()
     build_glints()
+    build_overlay()
     build_titles()
     key_material_values()
     setup_render()
