@@ -1264,14 +1264,12 @@ def build_terrain():
     tx, ty = L["TSUME_C"]
     tw, td, tz = L["TSUME_W"], L["TSUME_D"], L["TSUME_Z"]
     new_obj("TsumeTop", mesh("tsume_top", lambda bm: bm_box(bm, tw, td, 0.2, c=(tx, ty, tz - 0.2)), ["Gravel"]), c)
-    # 盛り土（石垣ができる前の台地の斜面）。石垣の完成後は不要なので隠す
+    # 盛り土（石垣ができる前の台地の斜面）
     # 石垣と同じ反りの断面で、1.2m 内側に作る（直線だと中ほどで石垣の外にはみ出す）
     mrings = [(w_ - 1.2, d_ - 1.2, z_) for (w_, d_, z_, _x, _y) in ishigaki_rings(hw, hd, mz, hz - 0.05, B)]
-    mound = new_obj("Mound", mesh("mound", lambda bm: bm_loft(bm, mrings), ["Earth"]), c)
-    sched(mound, 1, 1, "none", end=300, end_dur=1, end_mode="none")
+    new_obj("Mound", mesh("mound", lambda bm: bm_loft(bm, mrings), ["Earth"]), c)   # 石垣の内側の土（残しておく）
     trings = [(w_ - 1.0, d_ - 1.0, z_, x_, y_) for (w_, d_, z_, x_, y_) in ishigaki_rings(tw, td, hz - 0.3, tz - 0.05, 2.2, tx, ty, n=4)]
-    tm = new_obj("TsumeMound", mesh("tsume_mound", lambda bm: bm_loft(bm, trings), ["Earth"]), c)
-    sched(tm, 1, 1, "none", end=330, end_dur=1, end_mode="none")
+    new_obj("TsumeMound", mesh("tsume_mound", lambda bm: bm_loft(bm, trings), ["Earth"]), c)
     # 掘る前の地面（堀の範囲を覆うフタ）。4辺に分けて順に沈め、掘削を表現する
     ib_w, ib_d = hw + 2 * B - 1.2, hd + 2 * B - 1.2
     o = [(-ow / 2, -od / 2), (ow / 2, -od / 2), (ow / 2, od / 2), (-ow / 2, od / 2)]
@@ -2334,6 +2332,10 @@ def setup_render():
         vs.view_transform = 'Filmic'
     vs.exposure = EXPOSURE_KEYS[0][1]
     r.use_motion_blur = False
+    # Cycles の「永続データ」はオフ。表示/非表示の切り替えが続く長い連続レンダリングで、
+    # オブジェクトごとのプロパティ（建設マスク）が食い違い、石垣が透ける現象を確認したため
+    if hasattr(r, "use_persistent_data"):
+        r.use_persistent_data = False
     r.filepath = CFG["OUTPUT_PATH"]
     ims = r.image_settings
     if CFG["OUTPUT_VIDEO"]:
