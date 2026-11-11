@@ -55,7 +55,8 @@ CFG = {
     # --- タイミング ----------------------------------------------------------
     "FPS": 30,
     "FRAME_START": 1,
-    "FRAME_END": 900,         # 30fps x 30秒
+    "FRAME_END": 1200,        # 30fps x 40秒（城だけの30秒版にするなら 900 にして CITY を False に）
+    "CITY": True,             # 大坂の町（上町・天満・船場・武家地・大川・東横堀川）も一緒に出来上がる
     # --- 生成量（減らすと軽くなる） -------------------------------------------
     "SEED": 1583,             # 乱数シード。変えると作業員や石の配置が変わる
     "WORKERS": None,          # 作業員の数（None = プリセットの値）
@@ -93,6 +94,7 @@ PRESETS = {
         "HAUL_TEAMS": 2, "BIRDS": 14, "DUST": 28, "FIRES": 12, "FIRE_LIGHTS": False,
         "DISPLACE": 0, "MOTION_BLUR": False, "VOL_TILE": '16', "VOL_SHADOWS": False,
         "GLARE_STREAKS": False, "RAYTRACE": False, "PLANAR_PROBE": True,
+        "CITY_SPACING": 12.0, "BOATS": 8,       # 町家の間隔（m。大きいほど軒数が減って軽い）・舟の数
     },
     # 高品質版：Cycles。石垣を実際に凹凸させ（変位）、モーションブラーで人や雲を流し、
     # 篝火に点光源、金のハイライトに星形のグレアを加える
@@ -102,6 +104,7 @@ PRESETS = {
         "HAUL_TEAMS": 3, "BIRDS": 30, "DUST": 60, "FIRES": 18, "FIRE_LIGHTS": True,
         "DISPLACE": 3, "MOTION_BLUR": True, "VOL_TILE": '4', "VOL_SHADOWS": True,
         "GLARE_STREAKS": True, "RAYTRACE": True, "PLANAR_PROBE": True,
+        "CITY_SPACING": 9.0, "BOATS": 16,
     },
 }
 for _k, _v in PRESETS[CFG["PRESET"]].items():
@@ -120,6 +123,10 @@ TITLES = {
     ],
     "end": (826, 900, "豊臣大坂城", "天正十一年（一五八三）築城開始 ／ 天守は天正十三年（一五八五）頃に完成"),
 }
+if CFG["FRAME_END"] > 900:     # 40秒版：日没後に大坂の町を見下ろす章と、最後のテロップ
+    TITLES["chapters"].append((905, 1060, "日没 ― 大坂の町に灯がともる"))
+    TITLES["end"] = (CFG["FRAME_END"] - 84, CFG["FRAME_END"], "豊臣大坂城",
+                     "天正十一年（一五八三）築城開始 ／ 城下町は上町・天満・船場へと広がった")
 
 # --- タイムライン（フレーム） --------------------------------------------------
 PH = {
@@ -167,6 +174,9 @@ SUN_KEYS = [
     (750, 258, 15.0, (1.00, 0.70, 0.40), 3.4, 2.0),
     (850, 265, 6.0,  (1.00, 0.52, 0.22), 2.8, 2.5),
     (900, 268, 2.5,  (1.00, 0.43, 0.17), 2.2, 3.0),
+    (960, 272, -1.5, (1.00, 0.34, 0.14), 0.8, 4.0),       # 日没
+    (1080, 274, -4.0, (0.90, 0.32, 0.22), 0.25, 5.0),
+    (1200, 276, -6.0, (0.70, 0.32, 0.34), 0.08, 6.0),     # 残照だけ
 ]
 # 空: (フレーム, 天頂の色, 太陽側の地平線, 反対側の地平線, 空の明るさ)
 SKY_KEYS = [
@@ -178,18 +188,22 @@ SKY_KEYS = [
     (680, (0.14, 0.28, 0.60),  (1.00, 0.80, 0.55), (0.62, 0.66, 0.80), 0.95),
     (800, (0.10, 0.14, 0.36),  (1.00, 0.55, 0.22), (0.45, 0.35, 0.50), 0.80),
     (900, (0.06, 0.07, 0.22),  (0.95, 0.38, 0.14), (0.32, 0.24, 0.40), 0.60),
+    (960, (0.05, 0.06, 0.18),  (0.92, 0.34, 0.13), (0.24, 0.19, 0.36), 0.50),
+    (1080, (0.04, 0.06, 0.16), (0.70, 0.26, 0.14), (0.14, 0.14, 0.28), 0.60),    # ブルーアワー：青い空の光で屋根並みを見せる
+    (1200, (0.03, 0.045, 0.12), (0.45, 0.18, 0.12), (0.09, 0.10, 0.20), 0.55),
 ]
 FOG_KEYS = [(1, 0.016), (80, 0.012), (150, 0.007), (220, 0.0025), (300, 0.0006),
-            (650, 0.0004), (800, 0.0007), (900, 0.0010)]      # 地表付近の霧の濃さ（夕方は薄く：低い太陽が霧で弱まるため）
-GOLD_GLOW_KEYS = [(1, 0.0), (745, 0.0), (800, 0.35), (860, 0.75), (900, 0.6)]   # 夕景で金が自ら輝く量
+            (650, 0.0004), (800, 0.0007), (900, 0.0010), (1200, 0.0012)]      # 地表付近の霧の濃さ（夕方は薄く：低い太陽が霧で弱まるため）
+GOLD_GLOW_KEYS = [(1, 0.0), (745, 0.0), (800, 0.35), (860, 0.75), (900, 0.6), (1000, 0.5), (1200, 0.4)]   # 夕景で金が自ら輝く量
 # 空気感：(フレーム, 霧の色, 前方散乱[光芒の強さ], 全体のかすみ)。朝は青白く光芒が強く、昼は澄み、夕方は金色にかすむ
 FOG_LOOK_KEYS = [(1, (0.78, 0.84, 0.98), 0.65, 0.0005), (150, (0.92, 0.90, 0.88), 0.55, 0.0003),
                  (300, (0.95, 0.96, 0.98), 0.30, 0.00008), (650, (1.00, 0.95, 0.88), 0.35, 0.00012),
-                 (800, (1.00, 0.80, 0.60), 0.55, 0.0003), (900, (0.95, 0.70, 0.55), 0.60, 0.0004)]
-WINDOW_GLOW_KEYS = [(1, 0.0), (795, 0.0), (850, 2.5), (900, 4.0)]   # 城下町の窓明かり
+                 (800, (1.00, 0.80, 0.60), 0.55, 0.0003), (900, (0.95, 0.70, 0.55), 0.60, 0.0004),
+                 (1200, (0.55, 0.50, 0.65), 0.50, 0.0003)]
+WINDOW_GLOW_KEYS = [(1, 0.0), (795, 0.0), (850, 2.5), (900, 3.5), (1050, 5.0), (1200, 5.5)]   # 城下町の窓明かり
 # 露出（実際のタイムラプス撮影のように、暗い朝夕は明るく・昼は絞る）
 EXPOSURE_KEYS = [(1, 0.7), (80, 0.3), (160, -0.2), (300, -0.55), (560, -0.55), (700, -0.35),
-                 (790, 0.0), (900, 0.45)]
+                 (790, 0.0), (900, 0.45), (960, 0.8), (1080, 1.3), (1200, 1.7)]
 
 # カメラ: (フレーム, 注視点, 方位[注視点から見たカメラの向き 南=180], 距離, カメラ高さ, 焦点距離mm)
 CAM_KEYS = [
@@ -208,7 +222,17 @@ CAM_KEYS = [
     (840, (40, 28, 36),   284, 240, 17, 36),     # 篝火と町の灯りを手前に、ゆっくり上昇しながら引く
     (900, (15, 5, 24),    258, 410, 108, 32),    # 引きのワイド：城・石垣・堀・城下町
 ]
-KICKER_KEYS = [(1, 0.0), (770, 0.0), (820, 4.0e5), (900, 5.0e5)]   # 完成カットの補助光（W）
+KICKER_KEYS = [(1, 0.0), (770, 0.0), (820, 4.0e5), (900, 5.0e5), (980, 3.0e5), (1200, 2.0e5)]   # 完成カットの補助光（W）
+# 40秒版の続き：日没後、城から大坂の町全体へ、高く引いていく
+EXT_CAM_KEYS = [
+    (960, (-150, -80, 0),  245, 900, 380, 30),
+    (1070, (-200, 0, 0),   228, 1450, 640, 32),
+    (1200, (-160, 60, 0),  216, 1850, 820, 34),    # 夕暮れの大坂：城・川・堀・町の灯り
+]
+
+
+def cam_keys():
+    return CAM_KEYS + (EXT_CAM_KEYS if CFG["FRAME_END"] > 900 else [])
 
 PREFIX = "TS_"                       # 生成物の名前の接頭辞（作り直し時の削除に使う）
 ROOT_NAME = "TS_豊臣大坂城"
@@ -1056,12 +1080,27 @@ def build_materials():
     simple_mat("Ox", (0.08, 0.05, 0.035), 0.7, 0)
     simple_mat("Pane", (0.02, 0.018, 0.016), 0.5, 0)       # 窓の奥
     simple_mat("Bird", (0.015, 0.015, 0.018), 0.7, 0)      # 鳥（烏）
+    simple_mat("Shu", (0.50, 0.07, 0.035), 0.6, 0.12)      # 朱塗り（寺院・五重塔）
+    # 町割りの地面：踏み固めた土。縁はノイズで不規則にぼかし、草地になじませる
+    m, nt, b = new_mat("CityGround", (0.36, 0.29, 0.21), 0.95)
+    gco = COORD(nt, "Generated")
+    gg = SEP(nt, gco)
+    edge = MATH(nt, 'MINIMUM', MATH(nt, 'MINIMUM', gg["X"], MATH(nt, 'SUBTRACT', 1.0, gg["X"])),
+                MATH(nt, 'MINIMUM', gg["Y"], MATH(nt, 'SUBTRACT', 1.0, gg["Y"])))
+    nz = NOISE(nt, POS(nt), 0.012, 4.0)
+    nt.links.new(MIXC(nt, NOISE(nt, POS(nt), 0.15, 3.0), (0.30, 0.24, 0.17), (0.40, 0.33, 0.24)), b.inputs["Base Color"])
+    finish_alpha(m, nt, b.outputs[0], MAPR(nt, MATH(nt, 'ADD', edge, MATH(nt, 'MULTIPLY', MATH(nt, 'SUBTRACT', nz, 0.5), 0.12)), 0.01, 0.07))
+    simple_mat("Sorin", (0.10, 0.085, 0.07), 0.45, 0.1, 2.0, 0.8)   # 相輪（青銅）
     # 城下町の窓明かり（夕方に灯る。WindowGlow をキーで変化）
     m, nt, b = new_mat("TownWindow", (0.02, 0.018, 0.016), 0.5)
     wg = nt.nodes.new("ShaderNodeValue")
     wg.name = wg.label = "WindowGlow"
     b.inputs["Emission Color"].default_value = (1.0, 0.58, 0.26, 1.0)
-    nt.links.new(wg.outputs[0], b.inputs["Emission Strength"])
+    # EEVEE では発光が周りを照らさない（Cycles は窓の光が壁や地面に回り込む）ので、少し強くして見え方をそろえる
+    glow = MATH(nt, 'MULTIPLY', wg.outputs[0], 2.5 if CFG["ENGINE"] == "EEVEE" else 1.0)
+    if CFG["CITY"]:   # 大坂の町では、家ごとの「灯った度合い」（ジオメトリーノードが書く lit）を掛ける
+        glow = MATH(nt, 'MULTIPLY', glow, ATTR(nt, "lit", 'INSTANCER'))
+    nt.links.new(glow, b.inputs["Emission Strength"])
     finish(m, nt, b.outputs[0])
     # 土埃：縁ほど透明な、柔らかい玉
     m, nt, b = new_mat("Dust", (0.58, 0.50, 0.38), 1.0)
@@ -1385,13 +1424,13 @@ def build_assets():
         (lambda bm: bm_box(bm, 7.0, 9.0, 3.4), "Shikkui"),
         (lambda bm: bm_prism(bm, 8.4, 10.2, 1.9, z0=3.4), "Ita"),
         (lambda bm: bm_box(bm, 7.6, 1.3, 0.12, c=(0, -5.0, 2.4)), "Ita"),
-        (lambda bm: [bm_box(bm, 2.4, 0.1, 0.9, c=(-1.6, -4.52, 1.3)), bm_box(bm, 1.2, 0.1, 0.5, c=(1.9, -4.52, 2.6))], "TownWindow"),
+        (lambda bm: [bm_box(bm, 2.4, 0.1, 0.9, c=(-1.6, -4.62, 1.3)), bm_box(bm, 1.2, 0.1, 0.5, c=(1.9, -4.62, 2.6))], "TownWindow"),
     ], props={"band_z": 1.3})
     make_asset("machiya_b", [
         (lambda bm: bm_box(bm, 6.0, 10.0, 4.6), "Shikkui"),
         (lambda bm: bm_prism(bm, 7.2, 11.0, 2.0, z0=4.6), "Ita"),
         (lambda bm: bm_box(bm, 6.6, 1.2, 0.12, c=(0, -5.4, 2.6)), "Ita"),
-        (lambda bm: [bm_box(bm, 3.6, 0.1, 0.6, c=(0, -5.02, 3.4)), bm_box(bm, 2.0, 0.1, 1.0, c=(-1.2, -5.02, 1.2))], "TownWindow"),
+        (lambda bm: [bm_box(bm, 3.6, 0.1, 0.6, c=(0, -5.12, 3.4)), bm_box(bm, 2.0, 0.1, 1.0, c=(-1.2, -5.12, 1.2))], "TownWindow"),
     ], props={"band_z": 1.6})
 
     # 松
@@ -1543,7 +1582,7 @@ def build_sun():
 
 def build_terrain():
     c = COL["env"]
-    ow, od, R = L["MOAT_W"], L["MOAT_D"], 4000.0
+    ow, od, R = L["MOAT_W"], L["MOAT_D"], 9000.0
     hw, hd, hz, mz, B = L["HON_W"], L["HON_D"], L["HON_Z"], L["MOAT_Z"], L["BATTER"]
 
     def ground(bm):     # 外側の地面（堀の外形の穴あき）
@@ -1618,7 +1657,8 @@ def build_mountains():
 def build_fog():
     if not CFG["USE_FOG"]:
         return
-    fog = new_obj("Fog", mesh("fog", lambda bm: bm_box(bm, 1500, 1500, 60, c=(0, -100, -8)), ["Fog"]), COL["env"])
+    size = 6000 if CFG["CITY"] else 1500      # 町まで霧とかすみが届く大きさ
+    fog = new_obj("Fog", mesh("fog", lambda bm: bm_box(bm, size, size, 60, c=(0, -100, -8)), ["Fog"]), COL["env"])
     node = MAT["Fog"].node_tree.nodes["FogDensity"]
     for f, v in FOG_KEYS:
         key_socket(node.outputs[0], v, f)
@@ -1629,15 +1669,16 @@ def build_clouds():
     if not CFG["USE_CLOUDS"]:
         return
     r = random.Random(CFG["SEED"] + 7)
+    cs = 1.8 if CFG["CITY"] else 1.0      # 町を見下ろす高さ（約800m）より上に浮かべるため、大きく高くする
     for i in range(12):
         def fn(bm, i=i):
             rr = random.Random(i * 31 + 5)
             for k in range(rr.randint(5, 9)):
-                bm_ico(bm, rr.uniform(28, 60), c=(rr.uniform(-90, 90), rr.uniform(-50, 50), rr.uniform(-8, 14)),
+                bm_ico(bm, rr.uniform(28, 60) * cs, c=(rr.uniform(-90, 90) * cs, rr.uniform(-50, 50) * cs, rr.uniform(-8, 14)),
                        scl=(1.3, 1.0, 0.5), sub=2)
         x0 = r.uniform(-1900, 700)
         ob = new_obj("Cloud%02d" % i, mesh("cloud%02d" % i, fn, ["Cloud"], smooth=True), COL["env"],
-                     (x0, r.uniform(-1400, 1400), r.uniform(280, 460)))
+                     (x0, r.uniform(-1400, 1400) * cs, r.uniform(950, 1250) if CFG["CITY"] else r.uniform(280, 460)))
         ob.keyframe_insert("location", index=0, frame=CFG["FRAME_START"])
         ob.location.x = x0 + 1100
         ob.keyframe_insert("location", index=0, frame=CFG["FRAME_END"])
@@ -1664,6 +1705,8 @@ def build_trees():
         if abs(x) < 25 and y < -120:                      # 南の街道
             continue
         if x < -185 and -260 < y < 210:                   # 西の城下町
+            continue
+        if CFG["CITY"] and in_city(x, y):                 # 大坂の町・川・堀
             continue
         if -20 > y > -190 and -120 < x < 120:             # 南の普請場
             continue
@@ -2415,6 +2458,8 @@ def zones_for(f):
                 for s in range(4):
                     z.append((("edge", cs[s], cs[(s + 1) % 4], ez, b), 1.2))   # b = 足場が使える最後
         return z
+    if CFG["CITY"]:     # 夕方は上町の大通りと、東横堀川沿いの道を歩く
+        return [(HON_S, 1), (SOUTH, 1), (R(-4, 4, -1000, -240, 0), 2), (R(-262, -254, -680, 280, 0), 1)]
     return [(HON_S, 1), (SOUTH, 1), (TOWN, 3)]
 
 
@@ -2556,6 +2601,360 @@ def build_town():
         sched(st, 580, 30, "fade")
 
 
+# =============================================================================
+# 10b. 大坂の町（ジオメトリーノードで数千軒を一度に配置）
+#      家1軒ずつにキーフレームを打つと重いので、「建つフレーム」「灯るフレーム」を持つ点を作り、
+#      ジオメトリーノードが時刻に応じて町家を立ち上げる（数千〜1万軒でも軽い）。
+#      町割り・時期は史実を参考にした演出（README の「史実について」を参照）。
+# =============================================================================
+RIVER_Y, RIVER_W = 380.0, 130.0      # 大川（旧淀川）：城の北を東から西へ流れる
+CANAL_X, CANAL_W = -235.0, 24.0      # 東横堀川：城の西を南北に掘る（大川から南へ）
+CITY_BLOCK = 80.0                    # 町割りの1ブロック（m）
+# (名前, x範囲, y範囲, 町割りの基準[x, y], 家並みが建つ期間, 窓明かりが灯る期間, 種類の重み[町家a, 町家b, 商家, 蔵])
+CITY_DISTRICTS = [
+    ("上町", (-170, 245), (-1085, -235), (0.0, -235.0), (250, 650), (975, 1075), (0.45, 0.30, 0.15, 0.10)),
+    ("天満", (-700, 500), (470, 1110), (0.0, 470.0), (480, 820), (940, 1040), (0.50, 0.35, 0.10, 0.05)),
+    ("船場", (-1010, -265), (-700, 300), (-265.0, 300.0), (650, 1000), (1015, 1140), (0.30, 0.25, 0.30, 0.15)),
+]
+BUKE_AREA = ((180, 520), (-580, -180), (350, 600), (950, 1050))   # 武家屋敷：城の南東（建つ期間・灯る期間）
+HONGANJI = (0.0, 700.0)             # 天満本願寺（大坂の町の北の中心）
+PAGODA_TEMPLE = (20.0, -1165.0)     # 上町の南端の寺院（四天王寺の方向をイメージ）
+
+
+def river_y(x):
+    return RIVER_Y + 30.0 * math.sin(x / 700.0)
+
+
+def in_city(x, y):
+    """町・川・堀の範囲か（木を植えない場所）。"""
+    for _n, (x0, x1), (y0, y1), *_rest in CITY_DISTRICTS:
+        if x0 - 20 < x < x1 + 20 and y0 - 20 < y < y1 + 20:
+            return True
+    (bx0, bx1), (by0, by1) = BUKE_AREA[0], BUKE_AREA[1]
+    if bx0 - 20 < x < bx1 + 20 and by0 - 20 < y < by1 + 20:
+        return True
+    if abs(y - river_y(x)) < RIVER_W / 2 + 25 or (abs(x - CANAL_X) < 30 and y < RIVER_Y):
+        return True
+    return math.hypot(x - PAGODA_TEMPLE[0], y - PAGODA_TEMPLE[1]) < 70
+
+
+def jroof_at(bm, z, *args, **kw):
+    """bm_jroof を高さ z に作る（アセットの中で使う）。"""
+    n0 = len(bm.verts)
+    bm_jroof(bm, *args, **kw)
+    bm.verts.ensure_lookup_table()
+    for v in bm.verts[n0:]:
+        v.co.z += z
+
+
+def build_city_assets():
+    """町の家の種類（c0〜c4）。種類ごとのコレクションを返す。"""
+    win = "TownWindow"
+    kinds = [
+        ("c0_machiya_a", [(lambda bm: bm_box(bm, 7.0, 9.0, 3.4), "Shikkui"),
+                          (lambda bm: bm_prism(bm, 8.4, 10.2, 1.9, z0=3.4), "Ita"),
+                          (lambda bm: bm_box(bm, 7.6, 1.3, 0.12, c=(0, -5.0, 2.4)), "Ita"),
+                          (lambda bm: [bm_box(bm, 2.4, 0.1, 0.9, c=(-1.6, -4.62, 1.3)), bm_box(bm, 1.2, 0.1, 0.5, c=(1.9, -4.62, 2.6))], win)],
+         {"band_z": 1.3}),
+        ("c1_machiya_b", [(lambda bm: bm_box(bm, 6.0, 10.0, 4.6), "Shikkui"),
+                          (lambda bm: bm_prism(bm, 7.2, 11.0, 2.0, z0=4.6), "Ita"),
+                          (lambda bm: bm_box(bm, 6.6, 1.2, 0.12, c=(0, -5.4, 2.6)), "Ita"),
+                          (lambda bm: [bm_box(bm, 3.6, 0.1, 0.6, c=(0, -5.12, 3.4)), bm_box(bm, 2.0, 0.1, 1.0, c=(-1.2, -5.12, 1.2))], win)],
+         {"band_z": 1.6}),
+        ("c2_shoka", [(lambda bm: bm_box(bm, 9.0, 12.0, 6.2), "Shikkui"),             # 商家：二階建て・本瓦
+                      (lambda bm: bm_prism(bm, 10.4, 13.0, 2.4, z0=6.2), "Kawara"),
+                      (lambda bm: bm_box(bm, 9.6, 1.6, 0.14, c=(0, -6.6, 3.0)), "Kawara"),
+                      (lambda bm: [bm_box(bm, 3.0, 0.1, 1.2, c=(-2.4, -6.12, 1.2)), bm_box(bm, 3.0, 0.1, 1.2, c=(2.4, -6.12, 1.2)),
+                                   bm_box(bm, 6.0, 0.1, 0.7, c=(0, -6.12, 4.6))], win)],
+         {"band_z": 2.6}),
+        ("c3_kura", [(lambda bm: bm_box(bm, 5.5, 7.5, 6.0), "Shikkui"),                # 土蔵：白壁と本瓦
+                     (lambda bm: bm_prism(bm, 6.6, 8.4, 2.0, z0=6.0), "Kawara"),
+                     (lambda bm: bm_box(bm, 1.2, 0.1, 1.0, c=(0, -3.87, 4.2)), "WoodDark")],
+         {"band_z": 0.9}),
+    ]
+
+    def buke_walls(bm):            # 武家屋敷：塀で囲い、南に門
+        bm_box(bm, 36, 0.6, 2.4, c=(0, 18, 0))
+        bm_box(bm, 0.6, 36, 2.4, c=(18, 0, 0))
+        bm_box(bm, 0.6, 36, 2.4, c=(-18, 0, 0))
+        for sx in (-1, 1):
+            bm_box(bm, 15, 0.6, 2.4, c=(sx * 10.5, -18, 0))
+    kinds.append(("c4_buke", [
+        (buke_walls, "Shikkui"),
+        (lambda bm: bm_box(bm, 18, 13, 5.0, c=(0, 4, 0)), "Shikkui"),
+        (lambda bm: [jroof_at(bm, 5.0, 22, 17, 9, 0.8, 4.0, lift=0.4, seg=4), bm_box(bm, 7, 2.2, 0.5, c=(0, -18, 3.2))], "Kawara"),
+        (lambda bm: [bm_box(bm, 6, 0.6, 3.2, c=(0, -18, 0))], "WoodDark"),
+        (lambda bm: [bm_ico(bm, 2.6, c=(-11, -9, 3.4), scl=(1.3, 1.0, 0.5)), bm_ico(bm, 2.2, c=(11, -10, 3.0), scl=(1.3, 1.0, 0.5))], "Pine"),
+        (lambda bm: [bm_box(bm, 3.0, 0.1, 1.0, c=(-4, -2.62, 1.6)), bm_box(bm, 3.0, 0.1, 1.0, c=(4, -2.62, 1.6))], win),
+    ], {"band_z": 1.0}))
+    return [make_asset(key, parts, props) for key, parts, props in kinds]
+
+
+def city_growth_group(town, name):
+    """ジオメトリーノード：点の build（建つフレーム）・light（灯るフレーム）・rot・sx を読み、
+    時刻に応じて家（town コレクション）を立ち上げ（10フレームで下から伸びる）、窓明かりの度合い lit を家に書き込む。
+    家の種類ごとに別の点群・別のノードにしている（種類ごとに軒数や建つ時期を調整しやすいように）。"""
+    ng = bpy.data.node_groups.new(PREFIX + "CityGrowth_" + name, "GeometryNodeTree")
+    ng.interface.new_socket(name="Geometry", in_out='INPUT', socket_type='NodeSocketGeometry')
+    ng.interface.new_socket(name="Geometry", in_out='OUTPUT', socket_type='NodeSocketGeometry')
+    N, Lk = ng.nodes, ng.links
+    gi, go = N.new("NodeGroupInput"), N.new("NodeGroupOutput")
+
+    def attr(name):
+        n = N.new("GeometryNodeInputNamedAttribute")
+        n.data_type = 'FLOAT'
+        n.inputs["Name"].default_value = name
+        return n.outputs["Attribute"]
+    frame = N.new("GeometryNodeInputSceneTime").outputs["Frame"]
+    age = MATH(ng, 'SUBTRACT', frame, attr("build"))
+    dele = N.new("GeometryNodeDeleteGeometry")           # まだ建っていない家は消しておく（軽くなる）
+    dele.domain = 'POINT'
+    Lk.new(gi.outputs[0], dele.inputs["Geometry"])
+    Lk.new(MATH(ng, 'LESS_THAN', age, 0.0), dele.inputs["Selection"])
+    rise = MATH(ng, 'MINIMUM', MATH(ng, 'MAXIMUM', MATH(ng, 'DIVIDE', age, 10.0), 0.05), 1.0)
+    sx = attr("sx")
+    scl = N.new("ShaderNodeCombineXYZ")
+    Lk.new(sx, scl.inputs[0])
+    Lk.new(sx, scl.inputs[1])
+    Lk.new(MATH(ng, 'MULTIPLY', sx, rise), scl.inputs[2])
+    rot = N.new("ShaderNodeCombineXYZ")
+    Lk.new(attr("rot"), rot.inputs[2])
+    ci = N.new("GeometryNodeCollectionInfo")
+    ci.inputs["Collection"].default_value = town
+    ci.inputs["Reset Children"].default_value = True
+    iop = N.new("GeometryNodeInstanceOnPoints")
+    Lk.new(dele.outputs["Geometry"], iop.inputs["Points"])
+    Lk.new(ci.outputs[0], iop.inputs["Instance"])
+    Lk.new(rot.outputs[0], iop.inputs["Rotation"])
+    Lk.new(scl.outputs[0], iop.inputs["Scale"])
+    store = N.new("GeometryNodeStoreNamedAttribute")     # 窓明かり：灯るフレームから30フレームで明るくなる
+    store.data_type = 'FLOAT'
+    store.domain = 'INSTANCE'
+    store.inputs["Name"].default_value = "lit"
+    Lk.new(iop.outputs["Instances"], store.inputs["Geometry"])
+    lit = MATH(ng, 'MINIMUM', MATH(ng, 'MAXIMUM', MATH(ng, 'DIVIDE', MATH(ng, 'SUBTRACT', frame, attr("light")), 30.0), 0.0), 1.0)
+    Lk.new(lit, store.inputs["Value"])
+    Lk.new(store.outputs["Geometry"], go.inputs[0])
+    return ng
+
+
+def make_pagoda(name, col, x, y, start):
+    """五重塔：朱塗りの軸部、反りのある5つの屋根、青銅の相輪。"""
+    z = 1.2
+    base = new_obj(name + "_base", mesh(name + "_base", lambda bm: bm_box(bm, 12, 12, 1.2), ["IshigakiBlock"]), col, (x, y, 0))
+    sched(base, start, 6, "rise", dz=1.0)
+    for i in range(5):
+        w = 8.4 - i * 0.6
+        b = new_obj("%s_b%d" % (name, i), mesh("%s_b%d" % (name, i), lambda bm, w=w: bm_box(bm, w, w, 2.7), ["Shu"]), col, (x, y, z))
+        sched(b, start + 6 + i * 10, 6, "reveal")
+        jroof_set("%s_r%d" % (name, i), col, x, y, z + 2.7, w + 4.6, w + 4.6, w - 0.6, w - 0.6, 1.3, start + 10 + i * 10,
+                  lift=0.7, gold=False, onigawara=False, solid=0.25)
+        z += 2.7 + 1.3
+    so = new_obj(name + "_sorin", mesh(name + "_sorin", lambda bm: [bm_cyl(bm, 0.18, 0.12, 9.5, 8)] +
+                                       [bm_cyl(bm, 0.5 - k * 0.025, 0.5 - k * 0.025, 0.12, 12, c=(0, 0, 1.6 + k * 0.6)) for k in range(9)],
+                                       ["Sorin"]), col, (x, y, z - 0.6))
+    sched(so, start + 62, 6, "grow")
+
+
+def build_city():
+    """大坂の町：川・堀・橋・町割り・家並み・寺院。城の工事と同じ1日のうちに出来上がり、日没後に灯がともる。"""
+    c = COL["life"]
+    r = random.Random(CFG["SEED"] + 101)
+    # --- 大川（旧淀川）と川岸 -------------------------------------------------
+    def river(bm):
+        xs = list(range(-6000, 6001, 60))
+        rows = []
+        for x in xs:
+            yc = river_y(x)
+            rows.append([bm.verts.new((x, yc + sy * RIVER_W / 2, 0.15)) for sy in (-1, 1)])
+        for a, b in zip(rows, rows[1:]):
+            bm.faces.new((a[0], b[0], b[1], a[1]))
+
+    def banks(bm):
+        for sy in (-1, 1):
+            rows = []
+            for x in range(-6000, 6001, 60):
+                yc = river_y(x)
+                rows.append([bm.verts.new((x, yc + sy * (RIVER_W / 2 + o_), 0.10)) for o_ in (-2.0, 14.0)])
+            for a, b in zip(rows, rows[1:]):
+                bm.faces.new((a[0], b[0], b[1], a[1]) if sy < 0 else (a[1], b[1], b[0], a[0]))
+    new_obj("River_Okawa", mesh("river_okawa", river, ["Water"]), COL["env"])
+    new_obj("River_Banks", mesh("river_banks", banks, ["Earth"]), COL["env"])
+    # --- 東横堀川：大川から南へ掘り進め、水が流れ込む -------------------------------
+    top = river_y(CANAL_X) - RIVER_W / 2 + 4
+    ln = top - (-1100.0)
+    dig = new_obj("Canal_Dig", mesh("canal_dig", lambda bm: bm_box(bm, CANAL_W + 8, ln, 0.08, c=(0, -ln / 2, 0)), ["Earth"]), c, (CANAL_X, top, 0))
+    sched(dig, 370, 30, "grow", axis="Y")
+    cw = new_obj("Canal_Water", mesh("canal_water", lambda bm: bm_box(bm, CANAL_W, ln, 0.06, c=(0, -ln / 2, 0.1)), ["Water"]), c, (CANAL_X, top, 0))
+    sched(cw, 400, 60, "grow", axis="Y")
+    # --- 橋：大川に2本、東横堀川に7本 -------------------------------------------
+    for k, (bx, f) in enumerate(((170.0, 470), (-330.0, 640))):
+        L_ = RIVER_W + 36
+
+        def rbridge(bm, L_=L_):
+            bm_box(bm, 7.0, L_, 0.5, c=(0, L_ / 2, 1.6))
+            for sx in (-1, 1):
+                bm_box(bm, 0.25, L_, 1.0, c=(sx * 3.4, L_ / 2, 2.1))
+                for j in range(1, 10):
+                    bm_box(bm, 0.5, 0.5, 2.0, c=(sx * 2.8, L_ * j / 10, -0.2))
+        br = new_obj("Bridge_Okawa%d" % k, mesh("bridge_okawa", rbridge, ["WoodDark"]), c, (bx, river_y(bx) - L_ / 2, 0))
+        sched(br, f, 40, "grow", axis="Y")
+    for k, by in enumerate((180, 20, -140, -300, -460, -620, -780)):
+        cb = new_obj("Bridge_Canal%d" % k, mesh("bridge_canal", lambda bm: [bm_box(bm, 34, 6, 0.45, c=(-17, 0, 0.9)),
+                                                                              bm_box(bm, 34, 0.2, 0.9, c=(-17, 2.9, 1.3)),
+                                                                              bm_box(bm, 34, 0.2, 0.9, c=(-17, -2.9, 1.3))], ["WoodDark"]),
+                     c, (CANAL_X + 17, by, 0))
+        sched(cb, 465 + k * 6, 14, "grow", axis="X")
+    # --- 町割りの地面（町ができる前に、土の色に変わる） ---------------------------------
+    areas = [(n, xr, yr, gr[0]) for n, xr, yr, _al, gr, *_ in CITY_DISTRICTS] + [("武家地", BUKE_AREA[0], BUKE_AREA[1], BUKE_AREA[2][0])]
+    for n, (x0, x1), (y0, y1), f0 in areas:
+        w_, d_ = x1 - x0 + 20, y1 - y0 + 20
+        pl = new_obj("CityGround_" + n, mesh("cityground_" + n, lambda bm, w_=w_, d_=d_: bm_box(bm, w_ + 80, d_ + 80, 0.04), ["CityGround"]), c,
+                     ((x0 + x1) / 2, (y0 + y1) / 2, 0))
+        sched(pl, max(2, f0 - 40), 40, "fade")
+    # --- 家並み：ブロックの外周に、通りに面して並べる -------------------------------
+    pts, build, light, rot, var, sxs = [], [], [], [], [], []
+    sp = float(CFG["CITY_SPACING"])
+    B = CITY_BLOCK
+    temples = []
+
+    def centers(lo, hi, align):
+        k0 = math.floor((lo - align) / B) - 1
+        out = []
+        for k in range(k0, k0 + int((hi - lo) / B) + 4):
+            cc = align + (k + 0.5) * B
+            if cc - B / 2 >= lo - 1e-6 and cc + B / 2 <= hi + 1e-6:
+                out.append(cc)
+        return out
+    for name, (x0, x1), (y0, y1), (ax, ay), (f0, f1), (l0, l1), weights in CITY_DISTRICTS:
+        cxs, cys = centers(x0, x1, ax), centers(y0, y1, ay)
+        dmax = max(math.hypot(cx, cy) for cx in cxs for cy in cys)
+        dmin = min(math.hypot(cx, cy) for cx in cxs for cy in cys)
+        for cx in cxs:
+            for cy in cys:
+                if name == "天満" and math.hypot(cx - HONGANJI[0], cy - HONGANJI[1]) < 100:
+                    continue
+                prog = (math.hypot(cx, cy) - dmin) / max(1.0, dmax - dmin)          # 城に近いブロックから
+                fb = lerp(f0, f1 - 30, prog) + r.uniform(-12, 12)
+                fl = lerp(l0, l1 - 30, prog) + r.uniform(-15, 15)
+                if name == "上町" and cx < -100 and len(temples) < 4 and int(abs(cy)) % 3 == 0:
+                    temples.append((cx, cy, fb))                                     # 上町の西の縁は寺町
+                    continue
+                size = B - 12
+                for side in range(4):
+                    u = -size / 2 + 8
+                    while u <= size / 2 - 8:
+                        if side == 0:
+                            px, py, a = cx + u, cy - size / 2 + 6, 0.0
+                        elif side == 1:
+                            px, py, a = cx + size / 2 - 6, cy + u, math.pi / 2
+                        elif side == 2:
+                            px, py, a = cx - u, cy + size / 2 - 6, math.pi
+                        else:
+                            px, py, a = cx - size / 2 + 6, cy - u, -math.pi / 2
+                        pts.append((px + r.uniform(-0.5, 0.5), py + r.uniform(-0.5, 0.5), 0.0))
+                        rot.append(a + r.uniform(-0.03, 0.03))
+                        var.append(float(weighted(list(zip(range(4), weights)), r)))
+                        sxs.append(r.uniform(0.9, 1.12))
+                        build.append(fb + r.uniform(0, 22))
+                        light.append(fl + r.uniform(0, 40))
+                        u += sp * r.uniform(0.9, 1.15)
+    # 武家屋敷（1ブロックに1軒）
+    (bx0, bx1), (by0, by1), (bf0, bf1), (bl0, bl1) = BUKE_AREA
+    for cx in centers(bx0, bx1, bx0):
+        for cy in centers(by0, by1, by1):
+            prog = (math.hypot(cx, cy) - 200) / 500
+            pts.append((cx, cy, 0.0))
+            rot.append(0.0)
+            var.append(4.0)
+            sxs.append(r.uniform(0.95, 1.05))
+            build.append(lerp(bf0, bf1, clamp(prog, 0, 1)) + r.uniform(-10, 10))
+            light.append(r.uniform(bl0, bl1))
+    kinds = build_city_assets()
+    names = ("machiya_a", "machiya_b", "shoka", "kura", "buke")
+    for vi, kind in enumerate(kinds):        # 家の種類ごとに点群を作る
+        idx = [i for i, v in enumerate(var) if int(v) == vi]
+        if not idx:
+            continue
+        me = bpy.data.meshes.new(PREFIX + "CityPoints_" + names[vi])
+        me.from_pydata([pts[i] for i in idx], [], [])
+        for nm, vals in (("build", build), ("light", light), ("rot", rot), ("sx", sxs)):
+            at = me.attributes.new(nm, 'FLOAT', 'POINT')
+            at.data.foreach_set("value", [vals[i] for i in idx])
+        cob = new_obj("City_" + names[vi], me, c)
+        md = cob.modifiers.new("CityGrowth", 'NODES')
+        md.node_group = city_growth_group(kind, names[vi])
+    CAM["city_houses"] = len(pts)
+    # --- 目印になる建物：天満本願寺・寺町・南端の寺院と五重塔 -----------------------------
+    hx, hy = HONGANJI
+    st = 450
+    pf = new_obj("Honganji_base", mesh("honganji_base", lambda bm: bm_box(bm, 48, 40, 1.4), ["IshigakiBlock"]), c, (hx, hy, 0))
+    sched(pf, st, 8, "rise", dz=1.4)
+    hall = new_obj("Honganji_hall", mesh("honganji_hall", lambda bm: bm_box(bm, 40, 32, 9.0), ["Shikkui"]), c, (hx, hy, 1.4))
+    hall["band_z"] = 6.5
+    sched(hall, st + 8, 18, "reveal")
+    jroof_set("Honganji", c, hx, hy, 10.4, 50, 42, 22, 1.6, 13.0, st + 26, lift=1.4, curve=1.8)
+    spans = perimeter_spans(hx - 64, hy - 58, hx + 64, hy + 58, 4.0, gaps=(lambda x, y: abs(x - hx) < 10 and y < hy,), seg=20.0)
+    build_dobei_line(c, spans, 0.0, st - 10, 2, "HonganjiWall")
+    for k, (tx_, ty_, fb) in enumerate(temples):        # 寺町
+        th = new_obj("Temple%d_hall" % k, mesh("temple_hall", lambda bm: bm_box(bm, 20, 15, 6.0), ["Shu" if k % 2 else "Shikkui"]), c, (tx_, ty_, 0))
+        th["band_z"] = 4.0
+        sched(th, fb + 10, 12, "reveal")
+        jroof_set("Temple%d" % k, c, tx_, ty_, 6.0, 26, 21, 10, 1.0, 7.0, fb + 22, lift=0.9)
+        spans = perimeter_spans(tx_ - 32, ty_ - 32, tx_ + 32, ty_ + 32, 3.0, gaps=(lambda x, y, tx_=tx_: abs(x - tx_) < 6 and y < ty_,), seg=16.0)
+        build_dobei_line(c, spans, 0.0, fb, 2, "Temple%dWall" % k)
+    px_, py_ = PAGODA_TEMPLE
+    make_pagoda("Pagoda", c, px_, py_, 560)
+    mh = new_obj("PagodaTemple_hall", mesh("pagoda_hall", lambda bm: bm_box(bm, 22, 16, 7.0), ["Shu"]), c, (px_ + 34, py_, 0))
+    sched(mh, 600, 12, "reveal")
+    jroof_set("PagodaTemple", c, px_ + 34, py_, 7.0, 29, 23, 11, 1.0, 8.0, 612, lift=1.0)
+    for k in range(10):                              # 町が広がる所に、土埃
+        n_, (x0, x1), (y0, y1), _al, (f0, f1), *_ = CITY_DISTRICTS[k % 3]
+        DUST.append((r.uniform(f0, f1), Vector((r.uniform(x0, x1), r.uniform(y0, y1), 0.5)), 2.5))
+    log("大坂の町：家 %d 軒、寺院 %d、橋 9" % (len(pts), len(temples) + 2))
+
+
+def build_boats():
+    """川舟：大川を下り、堀ができてからは東横堀川も行き来する。"""
+    c = COL["life"]
+    n = int(CFG["BOATS"])
+    if n <= 0:
+        return
+    make_asset("boat", [
+        (lambda bm: bm_loft(bm, [(1.4, 8.0, 0.0), (2.4, 11.0, 0.9)], cap_top=True, cap_bottom=True), "WoodDark"),
+        (lambda bm: bm_box(bm, 1.8, 3.2, 1.2, c=(0, -1.5, 0.9)), "Ita"),
+        (lambda bm: bm_cyl(bm, 0.07, 0.05, 6.0, 6, c=(0, 2.2, 0.9)), "Wood"),
+        (lambda bm: bm_box(bm, 0.08, 2.0, 3.2, c=(0, 2.4, 3.2)), "WhiteCloth"),        # 帆
+    ])
+    r = random.Random(CFG["SEED"] + 111)
+    FE = CFG["FRAME_END"]
+    for i in range(n):
+        canal = i >= int(n * 0.7)
+        e = instance("Boat%02d" % i, ASSET["boat"], c, (0, 0, -20), 0.0, r.uniform(0.9, 1.2))
+        key_hide(e, True, CFG["FRAME_START"])
+        if canal:     # 東横堀川（水が流れ込んでから）
+            f, y_from, y_to = 470 + r.uniform(0, 120), river_y(CANAL_X) - RIVER_W / 2, -1050.0
+            if r.random() < 0.5:
+                y_from, y_to = y_to, y_from
+            path = [Vector((CANAL_X + r.uniform(-3, 3), lerp(y_from, y_to, t), 0.25)) for t in (0.0, 0.5, 1.0)]
+            dur = r.uniform(280, 420)
+        else:         # 大川
+            f = r.uniform(-300, 600)
+            down = r.random() < 0.7
+            xa, xb = (2600.0, -2600.0) if down else (-2600.0, 2600.0)
+            lane = r.uniform(-35, 35)
+            path = [Vector((x, river_y(x) + lane, 0.25)) for x in (xa, (xa + xb) / 2, xb)]
+            dur = r.uniform(700, 1100) if down else r.uniform(1100, 1500)
+        d = path[-1] - path[0]
+        e.rotation_euler.z = math.atan2(-d.x, d.y)
+        key_hide(e, False, max(CFG["FRAME_START"], int(f)))
+        for k, pt in enumerate(path):
+            e.location = pt
+            e.keyframe_insert("location", frame=f + dur * k / 2)
+        set_interp(e, "LINEAR")
+        key_hide(e, True, min(FE + 1, int(f + dur) + 1))
+
+
 def build_haul_teams():
     """石曳き：修羅（木ぞり）に載せた巨石を、大勢で綱を引いて運ぶ。巨石の上では音頭取りが采配を振る。
     タイムラプスなので、1往復を約2秒に縮め、着いたら石を置いて（消えて）また次の石を運んでくる。"""
@@ -2684,7 +3083,7 @@ def build_birds():
 # =============================================================================
 def _cam_params(f):
     """CAM_KEYS を Catmull-Rom 風に補間して (位置, 注視点, 焦点距離) を返す。"""
-    ks = CAM_KEYS
+    ks = cam_keys()
     if f <= ks[0][0]:
         i = 0
     elif f >= ks[-1][0]:
@@ -2718,7 +3117,7 @@ def build_camera():
     c = COL["camlight"]
     cd = bpy.data.cameras.new(PREFIX + "Camera")
     cd.sensor_width = 36.0
-    cd.clip_start, cd.clip_end = 0.1, 12000.0
+    cd.clip_start, cd.clip_end = 0.5, 12000.0     # 遠くの町まで写すので、手前の描画開始を少し離して奥行きの精度を上げる
     cam = new_obj("Camera", cd, c)
     target = new_empty("CameraTarget", c, (0, 0, 0), 2.0, "SPHERE")
     con = cam.constraints.new('TRACK_TO')
@@ -3006,7 +3405,7 @@ def setup_render():
         setattrs(sc.eevee, (
             ("taa_render_samples", CFG["EEVEE_SAMPLES"] if final else max(8, CFG["EEVEE_SAMPLES"] // 4)),
             ("use_raytracing", CFG["RAYTRACE"]), ("use_ssr", True), ("use_gtao", True), ("use_shadows", True),
-            ("use_volumetric_shadows", CFG["VOL_SHADOWS"]), ("volumetric_end", 1800.0),
+            ("use_volumetric_shadows", CFG["VOL_SHADOWS"]), ("volumetric_end", 7000.0 if CFG["CITY"] else 1800.0),
             ("volumetric_tile_size", CFG["VOL_TILE"]), ("use_bloom", False),
             ("shadow_resolution_scale", 1.0 if hq else 0.5), ("shadow_ray_count", 2 if hq else 1)))
         rto = getattr(sc.eevee, "ray_tracing_options", None)
@@ -3123,6 +3522,9 @@ def key_material_values():
     for f, v in EXPOSURE_KEYS:
         sc.view_settings.exposure = v
         sc.view_settings.keyframe_insert("exposure", frame=f)
+        for key in ("TitleWhite", "TitleGold"):     # 露出を上げても文字の明るさは一定に（夜にグレアでにじまない）
+            em = next(n for n in MAT[key].node_tree.nodes if n.type == 'EMISSION')
+            key_socket(em.inputs["Strength"], 3.0 * 2.0 ** (-v), f)
     wnodes = MAT["Water"].node_tree.nodes
     for name, w_end in (("WaterNoise", 10.0), ("WaterNoise2", 45.0)):
         key_socket(wnodes[name].inputs["W"], 0.0, CFG["FRAME_START"])
@@ -3162,7 +3564,10 @@ def main():
     build_honmaru()
     build_tenshu()
     build_site()
-    build_town()
+    if CFG["CITY"]:
+        build_city()
+    else:
+        build_town()
     build_fires()
     apply_all_builds()      # ここまでに sched() したものをキーフレームに変換
     build_workers()
@@ -3170,6 +3575,8 @@ def main():
     build_haul_teams()
     build_dust()            # 石垣・櫓・御殿・石曳きの予定が出そろってから
     build_birds()
+    if CFG["CITY"]:
+        build_boats()
     build_kicker()
     build_glints()
     build_overlay()
