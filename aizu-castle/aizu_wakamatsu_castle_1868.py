@@ -79,7 +79,7 @@ QUALITY_PRESETS = {
     # res: 解像度 / samples: 最大サンプル / noise: 適応サンプリングのしきい値 / stone: 石垣の格子の細かさ(m)
     # fog_step: 霧の濃さを調べる間隔(m)。Cycles は何もしないと「霧の箱の大きさの 1/10」（ここでは約80m）
     #           ごとにしか霧を調べず、霧の塊や筋が消えて一様な白いもやになる（前回のテストの原因の一つ）
-    "TEST":    dict(res=(960, 402),   samples=64,  noise=0.025, stone=0.16, bounces=6, vol_bounces=1, fog_step=2.5, blur=True, bit16=True),
+    "TEST":    dict(res=(960, 402),   samples=128, noise=0.02, stone=0.16, bounces=6, vol_bounces=1, fog_step=2.5, blur=True, bit16=True),
     "PREVIEW": dict(res=(1920, 804),  samples=160, noise=0.02,  stone=0.10, bounces=6, vol_bounces=1, fog_step=1.5, blur=True, bit16=True),
     "FINAL":   dict(res=(3840, 1608), samples=512, noise=0.012, stone=0.05, bounces=8, vol_bounces=2, fog_step=1.0, blur=True, bit16=True),
 }
@@ -101,6 +101,9 @@ SOURCES = [
     "天守台は蒲生氏郷の時代の野面積み。内部は二段の穴蔵（塩蔵）で、天守への入口は天守台の下（右下）から",
     "赤瓦：1648年（慶安元年）から、凍みに強い釉薬瓦を採用。2011年に幕末の姿に合わせて赤瓦へ葺き替え",
     "本丸の建物のつながり：天守 → 走長屋 → 鉄門（本丸の表門）→ 南走長屋 → 干飯櫓（本丸の南西隅、二重櫓）",
+    "会津若松市「甦る鶴ヶ城 干飯櫓の復元」：瓦葺き以外の外部を白漆喰で覆う総塗り籠め。窓の格子も白漆喰で塗る。"
+    "古写真で軒の天井が波形に白く写る（垂木を塗り込めた軒裏）。古写真の時点で天守の張出の漆喰は大きく剥落（籠城戦の後）",
+    "赤瓦は 1965 年の再建時は灰色、2011 年に19世紀半ばの姿に合わせて赤瓦へ。走長屋・鉄門・南走長屋・干飯櫓も赤瓦",
 ]
 KEN = 1.97        # 【推測】1 間 ＝ 6.5 尺（京間）。天守の柱割りの基準
 SHAKU = 0.303
@@ -177,7 +180,7 @@ ASSUMPTIONS = [
     ("1間の長さ", "6.5尺（京間・約1.97m）とした"),
     ("最上重の縁と勾欄", "資料に「周囲に四尺の縁と勾欄」とあるが、外か内かは不明。外観復元の現天守に合わせて壁の内側とした"),
     ("張出（懸出）の位置", "初重の入口上・二重目の南北・三重目の張出は資料。初重は南面の東寄り、三重目は東西の面としたのは推測"),
-    ("窓", "窓の数（2間ごと）・大きさ・白い塗籠の格子は推測。資料は「各層に窓」まで"),
+    ("窓", "窓の数（2間ごと）は推測。資料は「各層に窓」と、格子も白漆喰で塗り込めること"),
     ("石落とし", "資料で確認できないため付けていない"),
     ("鯱・懸魚・破風", "鯱の形と色（青銅色）、懸魚の形、破風を白漆喰の塗籠としたのは推測"),
     ("天守の位置と向き", "本丸の西寄りに置き、大棟を東西方向にしたのは推測"),
@@ -190,6 +193,11 @@ ASSUMPTIONS = [
     ("松の位置", "本丸の松の本数・位置は推測"),
     ("遠景", "山並みと城下町は簡略化した形。方角と距離は会津盆地の地形におおよそ合わせた"),
     ("霧", "秋の朝に内堀の水面から立つ霧（川霧）として演出。濃さと高さは推測"),
+    ("霧の晴れ方", "天守を包む霧が、朝日の当たる東側から切れ間を広げて約6秒で晴れる演出。速さと形は推測"),
+    ("瓦の寸法", "赤瓦（資料）の丸瓦の幅・列の間隔（約30cm）は推測"),
+    ("懸魚・破風板", "破風板を白漆喰の塗籠（総塗り籠めの資料による）、二段の破風板と懸魚の形（蕪懸魚・鰭付き）は推測"),
+    ("窓の大きさ", "格子を白漆喰で塗ることは資料。窓の大きさ（幅約1.5m）・格子の本数は推測"),
+    ("山並みの形", "方角・距離・高さは会津盆地を囲む山地のおおよそに合わせた。尾根の形は推測（実際の地形データは使っていない）"),
     ("雲", "秋の朝の高い雲（ひつじ雲・うろこ雲）として演出。量と形は推測"),
     ("経年変化", "壁の雨じみ・瓦の汚れ・苔の程度は推測"),
     ("炊煙", "城の西と北の屋敷地から立つ朝の炊煙として演出。位置と量は推測"),
@@ -602,6 +610,15 @@ def simple_mat(key, color, rough=0.6, var=0.15, scale=2.0, metal=0.0):
 # =============================================================================
 # 4. マテリアル
 # =============================================================================
+def fog_time(nt):
+    """霧の時間の進み（最初のコマ 0 → 最後のコマ 1）を返す値ノード。"""
+    n = nt.nodes.new("ShaderNodeValue")
+    n.name = n.label = "FogTime"
+    f0, f1 = CFG["FRAME_START"], CFG["FRAME_END"]
+    add_time_driver(n.outputs[0], "min(max((frame-%d)/%.1f,0.0),1.0)" % (f0, max(1.0, f1 - f0)))
+    return n.outputs[0]
+
+
 def build_materials():
     # --- 赤瓦：【資料】鉄分を含む釉薬をかけた瓦。【推測】色味・つやの強さ ------------
     #     本瓦葺きの丸瓦の列（下り方向の筋）と、瓦 1 枚ずつのわずかな色の違い・釉薬のつや
@@ -614,7 +631,7 @@ def build_materials():
     along = MIXF(nt, ew, p["X"], p["Y"])                   # 列が並ぶ方向（屋根面の向きで切り替え）
     rows = MATH(nt, 'POWER', MATH(nt, 'ABSOLUTE', MATH(nt, 'SINE', MATH(nt, 'MULTIPLY', along, math.pi / 0.30))), 0.55)
     course = MATH(nt, 'POWER', MATH(nt, 'ABSOLUTE', MATH(nt, 'SINE', MATH(nt, 'MULTIPLY', p["Z"], math.pi / 0.17))), 3.0)
-    BUMP(nt, MATH(nt, 'ADD', rows, MATH(nt, 'MULTIPLY', course, -0.25)), 0.45, 0.08, b)
+    BUMP(nt, MATH(nt, 'ADD', MATH(nt, 'MULTIPLY', rows, 0.3), MATH(nt, 'MULTIPLY', course, -0.25)), 0.35, 0.08, b)   # 丸瓦の列は立体で作るので、模様は弱め
     cell = COMB(nt, MATH(nt, 'FLOOR', MATH(nt, 'DIVIDE', along, 0.30)), MATH(nt, 'FLOOR', MATH(nt, 'DIVIDE', p["Z"], 0.17)), 0.0)
     tile = WHITE(nt, cell)
     col = MIXC(nt, tile, (0.13, 0.026, 0.015), (0.21, 0.048, 0.026))
@@ -669,6 +686,15 @@ def build_materials():
     col = MIXC(nt, bluish, col, (0.26, 0.28, 0.30))                                       # 青みがかった石
     darkst = MATH(nt, 'MULTIPLY', MATH(nt, 'GREATER_THAN', MATH(nt, 'FRACT', MATH(nt, 'MULTIPLY', s_rand, 11.3)), 0.86), 0.6)
     col = MIXC(nt, darkst, col, (0.09, 0.09, 0.085))                                      # 黒っぽい石
+    # 壁全体の大きな変化（繰り返しに見せない）：数十mの明暗と色味のむら、天端から垂れる雨の黒い筋、乾いた明るい上部
+    gp = POS(nt)
+    gz = SEP(nt, gp)["Z"]
+    macro = NOISE(nt, gp, 0.04, 3.0)
+    col = MIXC(nt, MATH(nt, 'MULTIPLY', MAPR(nt, macro, 0.35, 0.65), 0.45), col, (0.20, 0.17, 0.13))
+    col = MIXC(nt, MATH(nt, 'MULTIPLY', MAPR(nt, NOISE(nt, gp, 0.025, 2.0), 0.55, 0.7), 0.35), col, (0.33, 0.33, 0.31))
+    drip = MAPR(nt, NOISE(nt, VSCALE(nt, gp, (0.9, 0.9, 0.035)), 1.0, 3.0), 0.55, 0.78)
+    col = MIXC(nt, MATH(nt, 'MULTIPLY', drip, 0.55), col, (0.05, 0.05, 0.045))
+    col = MIXC(nt, MATH(nt, 'MULTIPLY', MAPR(nt, gz, 11.0, 16.0), 0.18), col, (0.55, 0.54, 0.50))
     detail = NOISE(nt, co, 2.2, 6.0)
     col = MIXC(nt, MATH(nt, 'MULTIPLY', detail, 0.5), col, (0.13, 0.13, 0.12))               # 石肌の斑
     lichen = MATH(nt, 'MULTIPLY', MAPR(nt, NOISE(nt, co, 0.9, 4.0), 0.55, 0.72), 0.55)
@@ -726,6 +752,9 @@ def build_materials():
 
     # --- 遠景の山：距離に応じて空の色へ溶かす（空気遠近法） ---------------------------
     m, nt, b = new_mat("Mountain", (0.05, 0.07, 0.06), 1.0)
+    mz = SEP(nt, POS(nt))["Z"]
+    nt.links.new(MIXC(nt, MAPR(nt, NOISE(nt, POS(nt), 0.0004, 4.0), 0.35, 0.65), (0.025, 0.04, 0.03),
+                      MIXC(nt, MAPR(nt, mz, 600.0, 1600.0), (0.07, 0.075, 0.05), (0.09, 0.08, 0.07))), b.inputs["Base Color"])
     cam_d = nt.nodes.new("ShaderNodeCameraData")
     far = MAPR(nt, cam_d.outputs["View Distance"], 3000.0, 22000.0, 0.0, 0.35)   # 大気のかすみは主にボリューム（Haze）で
     haze = nt.nodes.new("ShaderNodeRGB")
@@ -770,8 +799,11 @@ def build_materials():
     wisp = NOISE(nt, VSCALE(nt, dv, (1.0, 1.0, 3.0)), 0.10, 1.0, 0.6)   # 水面をはう筋（縦に細かい）
     fog_top = nt.nodes.new("ShaderNodeValue")
     fog_top.name = fog_top.label = "FogTop"
-    fog_top.outputs[0].default_value = 10.0                     # 霧の上端（m）。本丸の石垣（16m）の中ほど
-    top = MATH(nt, 'ADD', MATH(nt, 'ADD', fog_top.outputs[0], MATH(nt, 'MULTIPLY', MATH(nt, 'SUBTRACT', big, 0.5), 9.0)),
+    fog_top.outputs[0].default_value = 11.0                     # 霧の上端（m）。本丸の石垣（16m）の中ほど
+    # 霧が晴れていく：8秒の間に、上端が約5m下がり、濃さが約45%になる（FogTime：最初のコマ 0 → 最後のコマ 1）
+    tt = fog_time(nt)
+    top0 = MATH(nt, 'SUBTRACT', fog_top.outputs[0], MATH(nt, 'MULTIPLY', tt, 5.0))
+    top = MATH(nt, 'ADD', MATH(nt, 'ADD', top0, MATH(nt, 'MULTIPLY', MATH(nt, 'SUBTRACT', big, 0.5), 9.0)),
                MATH(nt, 'MULTIPLY', MATH(nt, 'SUBTRACT', mid, 0.5), 4.0))
     hprof = MATH(nt, 'POWER', MAPR(nt, MATH(nt, 'DIVIDE', p["Z"], MATH(nt, 'MAXIMUM', top, 1.0)), 0.0, 1.0, 1.0, 0.0), 1.5)
     patch = MAPR(nt, MATH(nt, 'ADD', MATH(nt, 'MULTIPLY', big, 0.6), MATH(nt, 'MULTIPLY', mid, 0.4)), 0.36, 0.68, 0.0, 1.4)   # 霧の切れ間
@@ -789,12 +821,57 @@ def build_materials():
     fog_d.name = fog_d.label = "FogDensity"
     fog_d.outputs[0].default_value = 0.028                      # 水面近くの霧の中の見通し 約140m（上ほど薄い、切れ間あり）
     dens = MATH(nt, 'MULTIPLY', MATH(nt, 'MULTIPLY', MATH(nt, 'MULTIPLY', hprof, patch), MATH(nt, 'MULTIPLY', wispf, area)), fog_d.outputs[0])
+    dens = MATH(nt, 'MULTIPLY', dens, MATH(nt, 'SUBTRACT', 1.0, MATH(nt, 'MULTIPLY', tt, 0.55)))
     nt.links.new(dens, vol.inputs["Density"])
     nt.links.new(vol.outputs[0], out.inputs["Volume"])
     MAT["Fog"] = m
+    # --- 天守の高さまで包む薄い霧（約45m）：最初は天守を包み、約6秒（150コマ目）までに、朝日の当たる東側から
+    #     切れ間が広がって消える（日の出の後に放射霧が晴れていく様子。【推測】演出）
+    m = bpy.data.materials.new(PREFIX + "FogHigh")
+    if hasattr(m, "use_nodes") and not m.use_nodes:
+        m.use_nodes = True
+    nt = m.node_tree
+    for n in list(nt.nodes):
+        nt.nodes.remove(n)
+    out = nt.nodes.new("ShaderNodeOutputMaterial")
+    vol = nt.nodes.new("ShaderNodeVolumePrincipled")
+    vol.inputs["Color"].default_value = (0.99, 0.99, 1.0, 1.0)
+    vol.inputs["Anisotropy"].default_value = 0.0
+    pos = POS(nt)
+    p = SEP(nt, pos)
+    drift = nt.nodes.new("ShaderNodeVectorMath")
+    drift.operation = 'ADD'
+    nt.links.new(pos, drift.inputs[0])
+    for i, expr in ((0, "frame*0.017"), (1, "frame*0.006")):
+        fc = drift.inputs[1].driver_add("default_value", i)
+        fc.driver.type = 'SCRIPTED'
+        fc.driver.expression = expr
+    dv = drift.outputs[0]
+    tt = fog_time(nt)
+    tx, ty = LAYOUT["TENSHU_C"]
+    rr = nt.nodes.new("ShaderNodeVectorMath")
+    rr.operation = 'LENGTH'
+    nt.links.new(COMB(nt, MATH(nt, 'SUBTRACT', p["X"], tx), MATH(nt, 'SUBTRACT', p["Y"], ty), 0.0), rr.inputs[0])
+    area = MAPR(nt, rr.outputs["Value"], 260.0, 460.0, 1.0, 0.0)
+    ztop = MATH(nt, 'ADD', 40.0, MATH(nt, 'MULTIPLY', MATH(nt, 'SUBTRACT', NOISE(nt, dv, 0.012, 2.0), 0.5), 14.0))
+    hp = MATH(nt, 'MULTIPLY', MAPR(nt, p["Z"], 5.0, 14.0), MAPR(nt, MATH(nt, 'SUBTRACT', p["Z"], ztop), -10.0, 0.0, 1.0, 0.0))
+    n_e = NOISE(nt, dv, 0.022, 3.0, 0.55)
+    east = MAPR(nt, p["X"], tx - 200.0, tx + 200.0)
+    v_ = MATH(nt, 'ADD', n_e, MATH(nt, 'MULTIPLY', MATH(nt, 'SUBTRACT', 1.0, east), 0.25))
+    thr = MATH(nt, 'ADD', -0.15, MATH(nt, 'MULTIPLY', MATH(nt, 'POWER', MAPR(nt, tt, 0.0, 0.78), 1.6), 1.75))   # 初めはゆっくり、後半に一気に晴れる
+    clear = MAPR(nt, MATH(nt, 'SUBTRACT', v_, thr), -0.12, 0.12)
+    wisp = MAPR(nt, NOISE(nt, dv, 0.08, 2.0), 0.3, 0.75, 0.45, 1.3)
+    hd = nt.nodes.new("ShaderNodeValue")
+    hd.name = hd.label = "HighFogDensity"
+    hd.outputs[0].default_value = 0.012                         # 見通し 約300m
+    dens = MATH(nt, 'MULTIPLY', MATH(nt, 'MULTIPLY', MATH(nt, 'MULTIPLY', area, hp), MATH(nt, 'MULTIPLY', clear, wisp)), hd.outputs[0])
+    nt.links.new(dens, vol.inputs["Density"])
+    nt.links.new(vol.outputs[0], out.inputs["Volume"])
+    MAT["FogHigh"] = m
     # --- 盆地の霧（地表から約9m）と大気のかすみ（高さ約500mまで）：濃さが一定のボリューム（計算が軽い）
     for key, col_, dens_, aniso in (("BasinFog", (0.97, 0.98, 0.99), 0.0011, 0.0),     # 見通し 約3.5km
-                                    ("Haze", (0.86, 0.91, 0.98), 0.00007, 0.6)):       # 見通し 約55km
+                                    ("HazeLow", (0.86, 0.91, 0.98), 0.0001, 0.6),      # 地表〜250m：見通し 約40km
+                                    ("HazeHigh", (0.86, 0.91, 0.98), 0.000025, 0.6)):  # 250〜2000m：上ほど澄む
         m = bpy.data.materials.new(PREFIX + key)
         if hasattr(m, "use_nodes") and not m.use_nodes:
             m.use_nodes = True
@@ -910,10 +987,16 @@ def build_world(az, el):
     nt.links.new(VSCALE(nt, warp.outputs[0], (1.0, 1.7, 1.0)), vor.inputs["Vector"])     # 風の向きに少し伸びた雲の粒
     vor.inputs["Scale"].default_value = 11.0
     puff = MAPR(nt, vor.outputs["Distance"], 0.62, 0.18)                                 # 粒の中ほど濃い
-    group = MAPR(nt, NOISE(nt, plane, 0.45, 4.0, 0.55), 0.42, 0.60)                      # 雲の群れ
+    group = MAPR(nt, NOISE(nt, plane, 0.28, 3.0, 0.55), 0.50, 0.66)                      # 雲の群れ（あいだに青空の切れ間）
     fine = MAPR(nt, NOISE(nt, warp.outputs[0], 7.0, 3.0), 0.3, 0.8, 0.55, 1.0)
     dens = MATH(nt, 'MULTIPLY', MATH(nt, 'MULTIPLY', puff, group), fine)
-    cover = MATH(nt, 'MULTIPLY', dens, MAPR(nt, v["Z"], 0.015, 0.10))                    # 地平線のすぐ上だけかすむ
+    plane_hi = VSCALE(nt, plane, (0.5, 0.5, 1.0))                                        # さらに高い所の薄い巻雲（筋雲）
+    cir = MATH(nt, 'MULTIPLY', MATH(nt, 'MULTIPLY', MAPR(nt, NOISE(nt, VSCALE(nt, plane_hi, (0.35, 3.0, 1.0)), 1.2, 5.0, 0.6), 0.55, 0.78),
+                                    MAPR(nt, NOISE(nt, plane_hi, 0.35, 2.0), 0.45, 0.62)), 0.45)
+    band = MATH(nt, 'MULTIPLY', MATH(nt, 'MULTIPLY', MAPR(nt, v["Z"], 0.03, 0.05), MAPR(nt, v["Z"], 0.065, 0.11, 1.0, 0.0)),
+                MATH(nt, 'MULTIPLY', MAPR(nt, NOISE(nt, VSCALE(nt, plane, (0.2, 0.2, 1.0)), 2.5, 4.0), 0.45, 0.7), 0.7))   # 遠くの山の上の低い雲の帯
+    dens = MATH(nt, 'MAXIMUM', MATH(nt, 'MAXIMUM', dens, cir), band)
+    cover = MATH(nt, 'MULTIPLY', dens, MAPR(nt, v["Z"], 0.012, 0.06))                    # 地平線のすぐ上はかすみに溶ける
     sd = sun_dir_vec(az, el)
     dot = nt.nodes.new("ShaderNodeVectorMath")
     dot.operation = 'DOT_PRODUCT'
@@ -988,14 +1071,28 @@ def _stone_seeds(s_lo, s_hi, z_lo, z_hi, seed):
     """野面積みの石の中心と大きさ。段ごとに高さと継ぎ目の位置を変え、大石をときどき上下・左右に割って
     中石を混ぜる（石の大きさが不揃いになる）。戻り値：中心 su, sv、重み w（半径の二乗）、石ごとの乱数 rnd"""
     rng = np.random.default_rng(seed)
+    # 区間ごとに石の大きさの傾向を変える（積み直しの跡や、石の調達の違いのように）：(区間の終わり, 大きさの倍率, 割る割合)
+    zones, a = [], s_lo - 3.0
+    while a < s_hi + 3.0:
+        a += rng.uniform(12.0, 35.0)
+        zones.append((a, rng.uniform(0.7, 1.35), rng.uniform(0.25, 0.65)))
+
+    def zone_at(u_):
+        for (end, sc_, sp_) in zones:
+            if u_ < end:
+                return sc_, sp_
+        return zones[-1][1], zones[-1][2]
     su, sv, rad = [], [], []
     z = z_lo - 0.8
     while z < z_hi + 0.8:
-        rh = rng.uniform(0.7, 1.6)                       # 段の高さ（段ごとに違う）
+        rh = rng.uniform(0.7, 1.6) if rng.random() > 0.06 else rng.uniform(1.8, 2.3)   # ときどき背の高い段（大石）
         u = s_lo - rng.uniform(0.5, 2.5)
         while u < s_hi + 1.5:
-            w = rng.uniform(0.9, 2.9)                    # 石の幅
-            k = rng.random()
+            zs, split = zone_at(u)
+            w = rng.uniform(0.9, 2.9) * zs                # 石の幅
+            if rng.random() < 0.07:
+                w = rng.uniform(2.6, 3.6)                 # まれに大きな石
+            k = rng.uniform(0.0, 0.5) if rng.random() > split else rng.uniform(0.5, 1.0)   # 区間ごとの割合で割る
             if k < 0.5:                                  # 大石 1 個
                 parts = [(u, z, w, rh)]
             elif k < 0.78:                               # 上下に 2 個
@@ -1066,11 +1163,19 @@ def stone_relief(s, z, seed, amp):
     U, V = s.reshape(-1).astype(np.float64), z.reshape(-1).astype(np.float64)
     su, sv, w, rnd = _stone_seeds(U.min(), U.max(), V.min(), V.max(), seed)
     k = 1.35                                             # 縦方向を縮めて測る → 石が横長になる（長手を横にして積む）
-    i1, edge, junc = _power_nearest(U, V * k, su, sv * k, w)
+    # 石の輪郭を波打たせる（直線の多角形にしない）：向きの違う波をいくつか重ねて境界をゆがめる
+    rg = np.random.default_rng(seed + 5)
+    wu, wv = np.zeros_like(U), np.zeros_like(V)
+    for _ in range(6):
+        ang, fr, ph = rg.uniform(0, math.pi), rg.uniform(1.4, 4.0), rg.uniform(0, 6.28)
+        arg = (U * math.cos(ang) + V * math.sin(ang)) * fr + ph
+        wu += np.sin(arg) / 6.0
+        wv += np.cos(arg * 1.37 + 1.1) / 6.0
+    i1, edge, junc = _power_nearest(U + 0.16 * wu, (V + 0.12 * wv) * k, su, sv * k, w)
     r1 = rnd[i1]
     ra, rb, rc = (r1 * 7.31) % 1.0, (r1 * 13.7) % 1.0, (r1 * 29.3) % 1.0
     du, dv = U - su[i1], V - sv[i1]
-    prot = amp * (0.25 + 0.75 * r1)                      # 石ごとの出っ張り
+    prot = amp * (1.3 * r1 ** 0.8 - 0.1)                 # 石ごとの出っ張り（引っ込んだ石も混じる）
     plane = prot + (ra - 0.5) * 0.18 * du + (rb - 0.5) * 0.18 * dv    # 面の傾き（壁と平行ではない）
     plane += amp * 0.10 * np.sin(du * (1.8 + 2.5 * rc) + ra * 6.28) * np.sin(dv * (2.2 + 2.0 * ra) + rb * 6.28)
     gap = 0.025 + 0.10 * rc ** 2                         # 目地の幅（石ごとに違う。広い所に間詰石）
@@ -1080,17 +1185,24 @@ def stone_relief(s, z, seed, amp):
     # 間詰石：細かい Voronoi の小石を、目地と三つ辻のすき間に
     d1s, d2s, rs = voronoi(U, V, 0.34, 0.24, seed + 17)
     es = d2s - d1s
-    h_small = amp * 0.42 * np.clip(es / 0.25, 0, 1) ** 0.5 * (0.45 + 0.8 * rs) - 0.04
+    h_small = amp * 0.38 * np.clip(es / 0.25, 0, 1) ** 0.5 * (0.45 + 0.8 * rs) - 0.09   # 間詰石は奥まる
     fill = np.clip(1.0 - edge / (gap + 0.03), 0.0, 1.0)
     fill = np.maximum(fill, np.clip((0.30 - junc) / 0.18, 0, 1) * np.clip((0.22 - edge) / 0.15, 0, 1))
     h = h_big * (1.0 - fill) + np.maximum(h_small, h_big) * fill
+    # 岩肌の凹凸（石ごとに位相を変えた細かな起伏。4K では 5cm 間隔のメッシュで効く）
+    th = r1 * 41.0                                       # 石ごとに筋の向きと細かさを変える（模様がそろわないように）
+    f1, f2 = 5.0 + 6.0 * ra, 11.0 + 8.0 * rb
+    a1 = U * np.cos(th) + V * np.sin(th)
+    a2 = -U * np.sin(th) + V * np.cos(th)
+    rough = (np.sin(a1 * f1 + r1 * 40.0) * np.sin(a2 * f1 * 0.8 + r1 * 23.0) + 0.5 * np.sin(a1 * f2 + rc * 61.0)) * 0.014
+    h = h + rough * (1.0 - fill)
     rand = np.where(fill > 0.5, rs, r1)
     joint = np.where(fill > 0.5, np.clip(es / 0.08, 0, 1) * 0.55, np.clip((edge - gap) / 0.10, 0, 1))
     return h.reshape(shp), rand.reshape(shp), joint.reshape(shp)
 
 
 def build_stone_face(name, p0, dvec, nvec, length, z_bot, z_top, batter, concave, res, seed,
-                     ext0=True, ext1=True, amp=0.30):
+                     ext0=True, ext1=True, amp=0.36):
     """石垣の 1 面。p0=天端の始点(x,y)、dvec=面に沿った向き、nvec=外向きの法線、
     ext0/ext1=両端が出隅か（出隅なら根元ほど外へ張り出し、隣の面とつながる）。"""
     H = z_top - z_bot
@@ -1237,31 +1349,47 @@ def build_terrain():
     new_obj("Bank", mesh("bank", bank, ["Earth"]), c)
 
 
+# 会津盆地を囲む山並み（【推測】形は簡略化。方角・距離・高さは地形のおおよそに合わせた）
+#  (中心の方位°, 方位の幅°, 城からの距離 km, 山地の幅 km, 盆地からの高さ m)
+MOUNTAIN_RANGES = [
+    (270.0, 42.0, 14.0, 5.0, 850.0),     # 西の山地（明神ヶ岳など）
+    (225.0, 30.0, 19.0, 5.0, 1150.0),    # 南西（博士山など）
+    (180.0, 35.0, 12.0, 4.0, 1100.0),    # 南（大戸岳など）
+    (318.0, 30.0, 47.0, 9.0, 1850.0),    # 北西の遠い高い山並み（飯豊連峰）
+    (15.0, 35.0, 17.0, 5.0, 950.0),      # 北（雄国山など）
+    (45.0, 9.0, 17.8, 3.2, 1600.0),      # 北東（磐梯山）
+    (95.0, 40.0, 14.0, 5.0, 750.0),      # 東
+]
+
+
 def build_mountains():
-    """会津盆地を囲む山並み（簡略化）。北東約18kmに磐梯山。"""
-    def fn(bm):
-        segs = 360
-        first = prev = None
-        for k in range(segs):
-            az = 360.0 * k / segs
-            a = math.radians(az)
-            r = 16000 + 4000 * math.sin(math.radians(az * 3 + 40))
-            n = 0.5 + 0.5 * math.sin(math.radians(az * 7.3)) * math.cos(math.radians(az * 2.1 + 15))
-            east = 0.5 + 0.5 * math.sin(a)
-            hgt = 250 + 450 * n + 350 * east
-            db = abs(((az - 45.0) + 180) % 360 - 180)          # 磐梯山（北東）
-            if db < 14:
-                r = 17600
-                hgt = max(hgt, 1600 * (1 - db / 14) ** 1.6 + 350)
-            x, y = math.sin(a) * r, math.cos(a) * r
-            pair = (bm.verts.new((x, y, -50)), bm.verts.new((x * 1.03, y * 1.03, hgt)))
-            if prev:
-                bm.faces.new((prev[0], pair[0], pair[1], prev[1]))
-            else:
-                first = pair
-            prev = pair
-        bm.faces.new((prev[0], first[0], first[1], prev[1]))
-    new_obj("Mountains", mesh("mountains", fn, ["Mountain"]), COL["env"])
+    """山並み：重なり合う尾根の起伏（城から 6〜60 km）。遠い尾根ほど大気でかすみ、奥行きが出る。地球の丸みで遠いほど低く見える。"""
+    naz, nr = 1440, 96
+    az = np.radians(np.linspace(0.0, 360.0, naz, endpoint=False))
+    rr = 6000.0 * (60000.0 / 6000.0) ** np.linspace(0.0, 1.0, nr)            # 近いほど細かく
+    A, Rr = np.meshgrid(az, rr, indexing="ij")
+    H = np.zeros_like(A)
+    rng = np.random.default_rng(CFG["SEED"] + 7)
+    for (c, wd, R_, W_, Hm) in MOUNTAIN_RANGES:
+        d = np.degrees(np.angle(np.exp(1j * (A - math.radians(c)))))
+        win = np.clip(1.0 - (np.abs(d) / wd) ** 2, 0.0, 1.0)
+        prof = np.exp(-((Rr / 1000.0 - R_) / W_) ** 2)
+        ridge = np.zeros_like(A)                                               # 尾根と谷（向きの違う波を重ねた起伏）
+        for o in range(5):
+            f, ph = rng.uniform(6.0, 14.0) * 2 ** o, rng.uniform(0, 6.28)
+            g, ph2 = rng.uniform(0.3, 0.8) * 2 ** o, rng.uniform(0, 6.28)
+            ridge += (1.0 - np.abs(np.sin(A * f + Rr / 1000.0 * g + ph) * np.cos(A * f * 0.7 - Rr / 1000.0 * g * 1.3 + ph2))) / 2 ** o
+        ridge /= 1.94
+        H = np.maximum(H, Hm * win * prof * (0.45 + 0.55 * ridge))
+    H -= Rr ** 2 / (2 * 7.3e6)                                                  # 地球の丸み（大気の屈折込み）
+    H = np.where(H < 3.0, -6.0, H)                                              # 盆地の平地は地面（高さ2.4m）の下に隠す
+    X, Y = np.sin(A) * Rr, np.cos(A) * Rr
+    V = np.stack([X, Y, H], -1).reshape(-1, 3)
+    idx = np.arange(naz * nr).reshape(naz, nr)
+    nxt = np.roll(idx, -1, axis=0)
+    F = np.stack([idx[:, :-1], nxt[:, :-1], nxt[:, 1:], idx[:, 1:]], -1).reshape(-1, 4)
+    me = mesh_np("mountains", V, F, "Mountain", smooth_=True)
+    new_obj("Mountains", me, COL["env"])
 
 
 def build_far_trees_and_town():
@@ -1341,20 +1469,124 @@ def bm_ridge(bm, length, along_x=True, w=0.55, h=0.55):
     bm_box(bm, sx2, sy2, h * 0.3, c=(0, 0, h * 0.7))
 
 
-def window_mesh(w=1.25, h=1.1, bars=7):
+SIDE_DIR = [(1.0, 0.0), (0.0, 1.0), (-1.0, 0.0), (0.0, -1.0)]   # 屋根の各辺に沿った向き（南・東・北・西）
+
+
+def jroof_grid(w0, d0, w1, d1, h, side, u, t, curve, lift, flare=0.015, zoff=0.0):
+    """bm_jroof と同じ式で屋根面の点を求める。side：0=南 1=東 2=北 3=西、u：辺に沿った位置（0〜1）、
+    t：軒先 0〜上端 1。u, t は同じ形の numpy 配列。"""
+    w = w0 + (w1 - w0) * t
+    d = d0 + (d1 - d0) * t
+    cs = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
+    (ax, ay), (bx, by) = cs[side], cs[(side + 1) % 4]
+    x = (ax + (bx - ax) * u) * w / 2
+    y = (ay + (by - ay) * u) * d / 2
+    cf = np.abs(2 * u - 1) ** 2.2
+    k = (1 - t) ** 2
+    sc = 1 + flare * cf * k
+    return np.stack([x * sc, y * sc, zoff + h * t ** curve + lift * cf * k], -1)
+
+
+def _strips(P, side_vec, hw, hh, base=-0.02):
+    """P：(列の数, 列に沿った点, 3)。丸瓦のような「∩」形の断面の細長いメッシュ（列の先は軒丸瓦の小口）。"""
+    n, m, _ = P.shape
+    T = np.gradient(P, axis=1)
+    S = np.broadcast_to(np.asarray(side_vec, float), P.shape)
+    N = np.cross(S, T)
+    N /= np.linalg.norm(N, axis=-1, keepdims=True) + 1e-9
+    N = np.where(N[..., 2:3] < 0, -N, N)
+    V = np.stack([P - S * hw + N * base, P - S * hw * 0.7 + N * hh, P + S * hw * 0.7 + N * hh, P + S * hw + N * base], 2)
+    idx = np.arange(n * m * 4).reshape(n, m, 4)
+    F = [np.stack([idx[:, :-1, a], idx[:, 1:, a], idx[:, 1:, b], idx[:, :-1, b]], -1).reshape(-1, 4) for a, b in ((0, 1), (1, 2), (2, 3))]
+    F.append(idx[:, 0, [3, 2, 1, 0]])
+    return V.reshape(-1, 3), np.concatenate(F)
+
+
+def _beams(P0, P1, S, wd, ht):
+    """P0→P1 の角材（断面 wd×ht、横向き S）をまとめて作る。"""
+    A = P1 - P0
+    U = np.cross(A, S)
+    U /= np.linalg.norm(U, axis=-1, keepdims=True) + 1e-9
+    U = np.where(U[..., 2:3] < 0, -U, U)
+    V = np.stack([P + S * cs * wd / 2 + U * cu * ht / 2 for P in (P0, P1) for cs, cu in ((-1, -1), (1, -1), (1, 1), (-1, 1))], 1)
+    base = (np.arange(len(P0)) * 8)[:, None]
+    quads = np.array([(0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7), (0, 3, 2, 1), (4, 5, 6, 7)])
+    F = (base[:, None, :] + quads[None, :, :]).reshape(-1, 4)
+    return V.reshape(-1, 3), F
+
+
+def mesh_np(name, V, F, mat, smooth_=False):
+    key = PREFIX + name
+    if key in _MESH:
+        return _MESH[key]
+    me = bpy.data.meshes.new(key)
+    me.from_pydata(np.asarray(V).tolist(), [], np.asarray(F).tolist())
+    if smooth_:
+        me.polygons.foreach_set("use_smooth", [True] * len(me.polygons))
+    me.materials.append(MAT[mat])
+    me.update()
+    _MESH[key] = me
+    return me
+
+
+def jroof_rows(w0, d0, w1, d1, h, curve, lift, zoff, pitch=0.30, nt=9, hw=0.075, hh=0.09):
+    """本瓦葺きの丸瓦の列（約30cm間隔）を、屋根面に沿って立体で並べる。列の先は軒丸瓦の小口。"""
+    Vs, Fs, off = [], [], 0
+    for side in range(4):
+        L = w0 if side % 2 == 0 else d0
+        n = max(2, int(L / pitch))
+        u = (np.arange(n) + 0.5) / n
+        u = u[(u > 0.035) & (u < 0.965)]
+        U, T = np.meshgrid(u, np.linspace(0.0, 1.0, nt), indexing="ij")
+        V, F = _strips(jroof_grid(w0, d0, w1, d1, h, side, U, T, curve, lift, zoff=zoff), (*SIDE_DIR[side], 0.0), hw, hh)
+        Vs.append(V)
+        Fs.append(F + off)
+        off += len(V)
+    return np.concatenate(Vs), np.concatenate(Fs)
+
+
+def jroof_rafters(w0, d0, w1, d1, h, curve, lift, W, D, spacing=0.45, wd=0.12, ht=0.16, under=0.36):
+    """軒裏の垂木（【資料】古写真で軒の天井が「波形に白く」写る → 垂木を白漆喰で塗り込めた軒裏）。軒先から壁の線まで。"""
+    P0s, P1s, Ss = [], [], []
+    for side in range(4):
+        L = w0 if side % 2 == 0 else d0
+        if side % 2 == 0:
+            tw, o = (d0 - D) / max(d0 - d1, 1e-6), (d0 - D) / 2
+        else:
+            tw, o = (w0 - W) / max(w0 - w1, 1e-6), (w0 - W) / 2
+        tw = min(max(tw, 0.0), 1.0)
+        m = (o + 0.25) / L
+        n = max(1, int(L / spacing))
+        u = (np.arange(n) + 0.5) / n
+        u = u[(u > m) & (u < 1 - m)]
+        if len(u) == 0:
+            continue
+        p0 = jroof_grid(w0, d0, w1, d1, h, side, u, np.zeros_like(u), curve, lift)
+        p1 = jroof_grid(w0, d0, w1, d1, h, side, u, np.full_like(u, tw), curve, lift)
+        p0[:, 2] -= under + ht / 2
+        p1[:, 2] -= under + ht / 2
+        P0s.append(p0)
+        P1s.append(p1)
+        Ss.append(np.tile((*SIDE_DIR[side], 0.0), (len(u), 1)))
+    if not P0s:
+        return np.zeros((0, 3)), np.zeros((0, 4), int)
+    return _beams(np.concatenate(P0s), np.concatenate(P1s), np.concatenate(Ss), wd, ht)
+
+
+def window_mesh(w=1.5, h=1.3, bars=6):
     """格子窓（【推測】形）：白い塗籠の枠と縦格子、奥は暗い室内。正面は -Y、壁の面は y=0、原点は窓の中心。"""
     def inner(bm):
         bm_box(bm, w + 0.02, 0.03, h + 0.02, c=(0, -0.015, 0), base=False)
 
     def frame(bm):
-        t, dp = 0.16, 0.24
+        t, dp = 0.18, 0.34                       # 壁の厚みぶんの奥行き（窓の脇・上・下の白い面が陰を作る）
         for (x, z, sx, sz) in ((0, h / 2 + t / 2, w + 2 * t, t), (0, -h / 2 - t / 2, w + 2 * t, t),
                                (-w / 2 - t / 2, 0, t, h), (w / 2 + t / 2, 0, t, h)):
             bm_box(bm, sx, dp, sz, c=(x, -dp / 2, z), base=False)
         bm_box(bm, w + 2 * t + 0.12, dp + 0.08, 0.07, c=(0, -(dp + 0.08) / 2, -h / 2 - t - 0.035), base=False)
-        for k in range(bars):
+        for k in range(bars):                    # 【資料】窓の格子も白漆喰で塗り込める（太めの塗籠格子）
             x = -w / 2 + w * (k + 1) / (bars + 1)
-            bm_box(bm, 0.075, 0.11, h, c=(x, -0.13, 0), base=False)
+            bm_box(bm, 0.11, 0.14, h, c=(x, -0.17, 0), base=False)
     return multi_mesh("window_%.2f_%.2f_%d" % (w, h, bars), [(inner, "Mado"), (frame, "Shikkui")])
 
 
@@ -1369,6 +1601,15 @@ def gegyo_geom(bm, M):
         j = (i + 1) % 5
         bm.faces.new((fr[i], fr[j], bk[j], bk[i]))
     bmesh.ops.create_icosphere(bm, subdivisions=1, radius=0.07, matrix=M @ Matrix.Translation((0, -0.04, -0.22)))
+    for sx in (-1, 1):                                        # 鰭（ひれ）
+        fin = [(sx * 0.38, -0.06), (sx * 0.80, -0.20), (sx * 0.72, -0.46), (sx * 0.40, -0.30)]
+        f1 = [bm.verts.new(M @ Vector((x, 0.02, z))) for x, z in fin]
+        f2 = [bm.verts.new(M @ Vector((x, 0.07, z))) for x, z in fin]
+        bm.faces.new(f1 if sx < 0 else list(reversed(f1)))
+        bm.faces.new(list(reversed(f2)) if sx < 0 else f2)
+        for i in range(4):
+            j = (i + 1) % 4
+            bm.faces.new((f1[i], f1[j], f2[j], f2[i]))
 
 
 def shachi_mesh():
@@ -1383,13 +1624,18 @@ def shachi_mesh():
     return mesh("shachi2", fn, ["Shachi"], True)
 
 
-def roof_set(name, col, cx, cy, z, W0, D0, w1, d1, rh, lift, curve=ROOF_CURVE, ridge=False):
+def roof_set(name, col, cx, cy, z, W0, D0, w1, d1, rh, lift, curve=ROOF_CURVE, ridge=False, wall=None):
     """寄棟の屋根一式：軒裏（白漆喰）・赤瓦・隅棟（熨斗積み）・鬼瓦。原点 z は軒先の高さ。"""
     noji = new_obj(name + "_nokiura", mesh(name + "_nokiura", lambda bm: bm_jroof(bm, W0, D0, w1, d1, rh, lift=lift, curve=curve), ["Shikkui"]), col, (cx, cy, z))
     add_solidify(noji, 0.38)           # 軒の厚み（垂木・茅負を塗り込めた白い軒）
     kawara = new_obj(name + "_kawara", mesh(name + "_kawara", lambda bm: bm_jroof(bm, W0 + 0.12, D0 + 0.12, w1, d1, rh, lift=lift, zoff=0.1, curve=curve), ["Akagawara"]), col, (cx, cy, z))
     add_solidify(kawara, 0.2)
     new_obj(name + "_hips", mesh(name + "_hips", lambda bm: bm_hips(bm, W0 + 0.12, D0 + 0.12, w1, d1, rh, lift, curve=curve, zoff=0.12), ["Akagawara"]), col, (cx, cy, z))
+    V, F = jroof_rows(W0 + 0.12, D0 + 0.12, w1, d1, rh, curve, lift, zoff=0.1)              # 丸瓦の列
+    new_obj(name + "_rows", mesh_np(name + "_rows", V, F, "Akagawara"), col, (cx, cy, z))
+    if wall is not None:                                                                    # 塗り込めた垂木
+        V, F = jroof_rafters(W0, D0, w1, d1, rh, curve, lift, wall[0], wall[1])
+        new_obj(name + "_taruki", mesh_np(name + "_taruki", V, F, "Shikkui"), col, (cx, cy, z))
     if ridge:
         along_x = w1 >= d1
         new_obj(name + "_ridge", mesh(name + "_ridge", lambda bm: bm_ridge(bm, max(w1, d1) + 0.5, along_x), ["Akagawara"]), col, (cx, cy, z + rh + 0.02))
@@ -1414,6 +1660,10 @@ def build_irimoya(p, col, cx, cy, z_eave, W, D, o, top, ridge_x=True, shachi=1.0
     kaw = new_obj(p + "_kawara", mesh(p + "_kawara", lambda bm: bm_jroof(bm, W0 + 0.12, D0 + 0.12, rw, rd, rhh, rings=5, lift=TOP_LIFT, zoff=0.1, curve=ROOF_CURVE, cap=False), ["Akagawara"]), col, (cx, cy, z_eave), (0, 0, rot))
     add_solidify(kaw, 0.2)
     new_obj(p + "_hips", mesh(p + "_hips", lambda bm: bm_hips(bm, W0 + 0.12, D0 + 0.12, rw, rd, rhh, TOP_LIFT, curve=ROOF_CURVE, zoff=0.12), ["Akagawara"]), col, (cx, cy, z_eave), (0, 0, rot))
+    V, F = jroof_rows(W0 + 0.12, D0 + 0.12, rw, rd, rhh, ROOF_CURVE, TOP_LIFT, zoff=0.1)
+    new_obj(p + "_rows", mesh_np(p + "_rows", V, F, "Akagawara"), col, (cx, cy, z_eave), (0, 0, rot))
+    V, F = jroof_rafters(W0, D0, rw, rd, rhh, ROOF_CURVE, TOP_LIFT, W, D)
+    new_obj(p + "_taruki", mesh_np(p + "_taruki", V, F, "Shikkui"), col, (cx, cy, z_eave), (0, 0, rot))
 
     edge = rd / 2 + 0.35                           # 切妻の軒（腰との継ぎ目を覆う）
     dz = rise - rhh + 0.02
@@ -1443,15 +1693,29 @@ def build_irimoya(p, col, cx, cy, z_eave, W, D, o, top, ridge_x=True, shachi=1.0
             for sy in (-1, 1):
                 for y0, y1 in zip(ys, ys[1:]):
                     bm_beam(bm, (x, sy * y0, zroof(y0) - 0.12), (x, sy * y1, zroof(y1) - 0.12), 0.30)
-            M = Matrix.Translation((x + sx * 0.05, 0.0, rise - 0.40)) @ Matrix.Rotation(sx * math.pi / 2, 4, 'Z')
+                    bm_beam(bm, (x - sx * 0.04, sy * y0, zroof(y0) - 0.36), (x - sx * 0.04, sy * y1, zroof(y1) - 0.36), 0.24)   # 破風板の下段
+            M = (Matrix.Translation((x + sx * 0.06, 0.0, rise - 0.42)) @ Matrix.Rotation(sx * math.pi / 2, 4, 'Z')
+                 @ Matrix.Diagonal((1.4, 1.4, 1.4, 1.0)))
             gegyo_geom(bm, M)
 
     def ridge(bm):
         bm_box(bm, rw + 2 * ext + 0.2, 0.55, 0.38, c=(0, 0, rise - 0.12))
         bm_box(bm, rw + 2 * ext + 0.1, 0.40, 0.17, c=(0, 0, rise + 0.26))
+        for sx in (-1, 1):                         # 大棟の両端の鬼瓦
+            bm_box(bm, 0.22, 0.95, 0.9, c=(sx * (rw / 2 + ext + 0.05), 0, rise - 0.3))
+            bm_ico(bm, 0.42, (sx * (rw / 2 + ext + 0.05), 0, rise + 0.55), (0.25, 1.0, 0.55), sub=2)
+        for sy in (-1, 1):                         # けらば（妻側の端の瓦）
+            for y0, y1 in zip(ys, ys[1:]):
+                for sx in (-1, 1):
+                    bm_beam(bm, (sx * (rw / 2 + ext - 0.05), sy * y0, zroof(y0) + 0.06), (sx * (rw / 2 + ext - 0.05), sy * y1, zroof(y1) + 0.06), 0.2)
     new_obj(p + "_gable", multi_mesh(p + "_gable", [(gable_roof, "Akagawara"), (ridge, "Akagawara"),
                                                     (tsuma, "Shikkui"), (boards, "Shikkui")]),
             col, (cx, cy, z_eave), (0, 0, rot))
+    xs = np.arange(-(rw / 2 + ext) + 0.2, rw / 2 + ext - 0.1, 0.30)                    # 切妻部分の丸瓦の列
+    yy = np.array(ys)
+    P = np.array([[(x, sy * y, zroof(y)) for y in yy] for sy in (-1, 1) for x in xs])
+    V, F = _strips(P, (1.0, 0.0, 0.0), 0.075, 0.09)
+    new_obj(p + "_gable_rows", mesh_np(p + "_gable_rows", V, F, "Akagawara"), col, (cx, cy, z_eave), (0, 0, rot))
     ztop = z_eave + rise + 0.43
     if shachi > 0:
         sm = shachi_mesh()
@@ -1484,19 +1748,29 @@ def build_bay(p, col, cx, cy, T, side, off_ken, w_ken, depth, win):
                          (0, yb, hb + a), (0, yf - ov_f, hb + a)], 0.2)
         bm_beam(bm, (0, yf - ov_f, hb + a + 0.12), (0, yb, hb + a + 0.12), 0.42)
         bm_box(bm, 0.75, 0.2, 0.7, c=(0, yf - ov_f - 0.02, hb + a))      # 鬼瓦
+        bm_ico(bm, 0.32, (0, yf - ov_f - 0.02, hb + a + 0.72), (1.0, 0.3, 0.6), sub=2)
+        for sx in (-1, 1):                                                # けらば瓦
+            bm_beam(bm, (sx * (B / 2 + ov_s - 0.05), yf - ov_f + 0.05, hb + 0.06), (sx * 0.05, yf - ov_f + 0.05, hb + a + 0.06), 0.2)
 
     def gable(bm):
-        pts = [(-B / 2, yf - 0.02, hb - 0.05), (B / 2, yf - 0.02, hb - 0.05),
-               (B / 2, yf - 0.02, hb + ov_s * pitch - 0.22), (0, yf - 0.02, hb + a - 0.3),
-               (-B / 2, yf - 0.02, hb + ov_s * pitch - 0.22)]
+        yg = yf + 0.25                                                    # 妻壁を少し奥へ（破風板の下に陰ができる）
+        pts = [(-B / 2, yg, hb - 0.05), (B / 2, yg, hb - 0.05),
+               (B / 2, yg, hb + ov_s * pitch - 0.22), (0, yg, hb + a - 0.3),
+               (-B / 2, yg, hb + ov_s * pitch - 0.22)]
         vs = [bm.verts.new(q) for q in pts]
         bm.faces.new(list(reversed(vs)))
         for sx in (-1, 1):
             bm_beam(bm, (sx * (B / 2 + ov_s + 0.02), yf - ov_f + 0.14, hb - 0.12), (0, yf - ov_f + 0.14, hb + a - 0.02), 0.30)
-        gegyo_geom(bm, Matrix.Translation((0, yf - ov_f + 0.02, hb + a - 0.25)))
+            bm_beam(bm, (sx * (B / 2 + ov_s - 0.1), yf - ov_f + 0.18, hb - 0.36), (0, yf - ov_f + 0.18, hb + a - 0.26), 0.24)   # 破風板の下段
+        gegyo_geom(bm, Matrix.Translation((0, yf - ov_f + 0.02, hb + a - 0.28)) @ Matrix.Diagonal((1.3, 1.3, 1.3, 1.0)))
     me = multi_mesh("bay_%.2f_%.2f_%.2f" % (B, depth, hb), [(body, "Shikkui"), (roof, "Akagawara"), (gable, "Shikkui")])
     new_obj(p, me, col, (bx, by, T["z"]), (0, 0, rot))
     new_obj(p + "_win", win, col, (bx + n[0] * depth, by + n[1] * depth, T["z"] + hb * 0.52), (0, 0, rot))
+    ry = np.arange(yf - ov_f + 0.15, min(yb, 1.0), 0.30)                               # 千鳥破風の屋根の丸瓦の列
+    xx = np.linspace(1.0, 0.0, 8)
+    P = np.array([[(sx * (B / 2 + ov_s) * f, y, hb + a * (1 - f)) for f in xx] for sx in (-1, 1) for y in ry])
+    V, F = _strips(P, (0.0, 1.0, 0.0), 0.075, 0.09)
+    new_obj(p + "_rows", mesh_np("bay_rows_%.2f_%.2f_%.2f" % (B, depth, hb), V, F, "Akagawara"), col, (bx, by, T["z"]), (0, 0, rot))
 
 
 def build_balcony(p, col, cx, cy, T, zf):
@@ -1538,8 +1812,9 @@ def wall_mesh(name, W, D, h, wins, eh, first, step=0.3, zstep=0.25):
         nu = max(2, int(math.ceil(L / step)) + 1)
         nz = max(2, int(math.ceil((h + 0.4) / zstep)) + 1)
         Z, U = np.meshgrid(np.linspace(-0.4, h, nz), np.linspace(-L / 2, L / 2, nu), indexing="ij")
-        X = nvec[0] * half + rvec[0] * U
-        Y = nvec[1] * half + rvec[1] * U
+        wav = 0.012 * np.sin(U * 1.3 + rng.uniform(0, 6.28)) * np.sin(Z * 0.9 + rng.uniform(0, 6.28))   # 手塗りのわずかなうねり
+        X = nvec[0] * (half + wav) + rvec[0] * U
+        Y = nvec[1] * (half + wav) + rvec[1] * U
         st = np.zeros_like(U)
         for (sd, uw, zb) in wins:
             if sd != side:
@@ -1557,6 +1832,13 @@ def wall_mesh(name, W, D, h, wins, eh, first, step=0.3, zstep=0.25):
         idx = base + np.arange(nz * nu).reshape(nz, nu)
         a, b_, c, d = idx[:-1, :-1], idx[:-1, 1:], idx[1:, 1:], idx[1:, :-1]
         faces += np.stack([a, b_, c, d], -1).reshape(-1, 4).tolist()
+    for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1)):          # 角を丸める（漆喰の角の丸み）
+        ang = np.linspace(0, 2 * math.pi, 9)[:-1]
+        base = len(verts)
+        for zz in (-0.4, h):
+            verts += [(sx * W / 2 + 0.09 * math.cos(a_) - sx * 0.05, sy * D / 2 + 0.09 * math.sin(a_) - sy * 0.05, zz) for a_ in ang]
+            stain += [0.0] * 8
+        faces += [(base + i, base + (i + 1) % 8, base + 8 + (i + 1) % 8, base + 8 + i) for i in range(8)]
     me = bpy.data.meshes.new(key)
     me.from_pydata(verts, [], faces)
     at = me.attributes.new("w_stain", 'FLOAT', 'POINT')
@@ -1575,7 +1857,7 @@ def build_tower(p, col, cx, cy, base_z, tiers, bays=(), top=TOP_ROOF, win_scale=
     for (wk, dk, F, eh, o) in tiers:
         T.append(dict(W=wk * KEN, D=dk * KEN, wk=wk, dk=dk, z=z, eh=eh, eave=z + eh, o=o))
         z += F
-    win = window_mesh(1.25 * win_scale, 1.1 * win_scale)
+    win = window_mesh(1.5 * win_scale, 1.3 * win_scale, 6)
     ztop = None
     for i, t in enumerate(T):
         W, D, o = t["W"], t["D"], t["o"]
@@ -1600,10 +1882,10 @@ def build_tower(p, col, cx, cy, base_z, tiers, bays=(), top=TOP_ROOF, win_scale=
                     continue
                 pos = (cx + nvec[0] * half + rvec[0] * u * KEN, cy + nvec[1] * half + rvec[1] * u * KEN, t["z"] + t["eh"] * 0.54)
                 new_obj("%s%d_win%s%d" % (p, i, side, j), win, col, pos, (0, 0, rot))
-                wins.append((side, u * KEN, t["eh"] * 0.54 - 0.55 * win_scale - 0.23))
+                wins.append((side, u * KEN, t["eh"] * 0.54 - 0.65 * win_scale - 0.27))
         new_obj("%s%d_wall" % (p, i), wall_mesh("%s%d_wall" % (p, i), W, D, h, wins, t["eh"], i == 0), col, (cx, cy, t["z"]))
         if not last:
-            roof_set("%s%d" % (p, i), col, cx, cy, t["eave"], W + 2 * o, D + 2 * o, nx["W"] + 0.15, nx["D"] + 0.15, rh, ROOF_LIFT)
+            roof_set("%s%d" % (p, i), col, cx, cy, t["eave"], W + 2 * o, D + 2 * o, nx["W"] + 0.15, nx["D"] + 0.15, rh, ROOF_LIFT, wall=(W, D))
         else:
             ztop = build_irimoya("%s%d" % (p, i), col, cx, cy, t["eave"], W, D, o, top, ridge_x, shachi)
             if balcony:
@@ -1634,7 +1916,7 @@ def build_nagaya(p, col, x0, y0, x1, y1, width, wall_h, win_faces=(), win_step=4
     new_obj(p + "_wall", mesh(p + "_wall", lambda bm: bm_box(bm, W, D, wall_h + 0.9, c=(0, 0, -0.6)), ["Shikkui"]), col, (cx, cy, hz))
     o, rh = 1.3, width * 0.45
     w1, d1 = (max(0.5, W - D), 0.4) if along_x else (0.4, max(0.5, D - W))
-    roof_set(p, col, cx, cy, hz + wall_h, W + 2 * o, D + 2 * o, w1, d1, rh, 0.25, curve=1.3, ridge=True)
+    roof_set(p, col, cx, cy, hz + wall_h, W + 2 * o, D + 2 * o, w1, d1, rh, 0.25, curve=1.3, ridge=True, wall=(W, D))
     win = window_mesh(0.9, 0.8, 5)
     for side in win_faces:
         ln = W if side in "SN" else D
@@ -1822,7 +2104,16 @@ def build_fog():
         mc.volume_step_rate = rate
     log("霧を調べる間隔：%.1f m" % step)
     new_obj("BasinFog", mesh("basin_fog", lambda bm: bm_box(bm, 40000.0, 40000.0, 10.0, c=(0.0, 0.0, -1.0)), ["BasinFog"]), c)
-    new_obj("Haze", mesh("haze", lambda bm: bm_box(bm, 50000.0, 50000.0, 520.0, c=(0.0, 0.0, -1.0)), ["Haze"]), c)
+    # 大気のかすみ：低い層ほど濃い（山の裾ほどかすみ、頂は少し澄んで見える）
+    new_obj("HazeLow", mesh("haze_low", lambda bm: bm_box(bm, 130000.0, 130000.0, 251.0, c=(0.0, 0.0, -1.0)), ["HazeLow"]), c)
+    new_obj("HazeHigh", mesh("haze_high", lambda bm: bm_box(bm, 130000.0, 130000.0, 1750.0, c=(0.0, 0.0, 250.0)), ["HazeHigh"]), c)
+    # 天守を包む霧（晴れていく）
+    tx, ty = LAYOUT["TENSHU_C"]
+    hx, hy, hz_ = 940.0, 940.0, 48.0
+    new_obj("FogHigh", mesh("fog_high", lambda bm: bm_box(bm, hx, hy, hz_, c=(tx, ty, 4.0)), ["FogHigh"]), c)
+    mc = getattr(MAT["FogHigh"], "cycles", None)
+    if mc is not None and hasattr(mc, "volume_step_rate"):
+        mc.volume_step_rate = 3.0 / (0.1 * (hx + hy + hz_) / 3.0)          # 約3mごと
 
 
 def build_birds():
@@ -2085,9 +2376,9 @@ def setup_render():
     cy.use_denoising = True
     for attr, val in (("use_adaptive_sampling", True), ("adaptive_threshold", q["noise"]),
                       ("adaptive_min_samples", 16),
-                      ("max_bounces", q["bounces"]), ("diffuse_bounces", 3), ("glossy_bounces", 3),
+                      ("max_bounces", q["bounces"]), ("diffuse_bounces", 4), ("glossy_bounces", 4),
                       ("transmission_bounces", 2), ("transparent_max_bounces", 8),
-                      ("volume_bounces", q["vol_bounces"]), ("blur_glossy", 0.5),
+                      ("volume_bounces", q["vol_bounces"]), ("blur_glossy", 0.2),
                       ("caustics_reflective", False), ("caustics_refractive", False),
                       ("use_light_tree", True), ("denoiser", 'OPENIMAGEDENOISE'),
                       ("denoising_prefilter", 'ACCURATE'), ("denoising_input_passes", 'RGB_ALBEDO_NORMAL'),
@@ -2222,6 +2513,8 @@ def write_notes():
               "・天守台は野面積み。入口は天守台の下（穴蔵）から【資料4】",
               "・天守の周りに銃眼のある土塀【資料1】",
               "・天守 → 走長屋 → 鉄門 → 南走長屋 → 干飯櫓（南西隅の二重櫓）【資料6】",
+              "・瓦以外は白漆喰の総塗り籠め。窓の格子も白漆喰。軒裏は垂木を塗り込めた波形の白い天井【資料7】",
+              "・張出の漆喰の剥落は籠城戦の後の古写真の姿。このショット（籠城戦の前）では剥落させない【資料7】",
               "・籠城戦は慶応4年8月23日（新暦1868年10月8日）から。このショットはその前の朝",
               "", "【張出（懸出）と千鳥破風の根拠】"]
     lines += ["・%d重目 %s面：%s" % (b[0] + 1, b[1], b[5]) for b in BAYS]
